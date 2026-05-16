@@ -1,10 +1,11 @@
-name: 全插件X86固件编译
+name: 多通道全插件X86固件编译
 on:
   workflow_dispatch:
 
 env:
   TZ: Asia/Shanghai
   UPLOAD_RELEASE: true
+  UPLOAD_COW: true
 
 jobs:
   build:
@@ -15,7 +16,7 @@ jobs:
       - name: 安装编译依赖
         run: |
           sudo apt update -y
-          sudo apt install -y build-essential flex bison gawk libncurses-dev git libssl-dev unzip
+          sudo apt install -y build-essential flex bison gawk libncurses-dev git libssl-dev unzip curl wget
 
       - name: 拉取ImmortalWrt源码
         run: |
@@ -26,7 +27,7 @@ jobs:
           ./scripts/feeds update -a
           ./scripts/feeds install -a
 
-      - name: 写入你的全插件配置
+      - name: 写入全插件配置
         run: |
           cd openwrt
           cat > .config << 'EOF'
@@ -57,30 +58,14 @@ CONFIG_PACKAGE_luci-app-adguardhome=y
 CONFIG_PACKAGE_luci-app-smartdns=y
 CONFIG_PACKAGE_luci-app-samba4=y
 CONFIG_PACKAGE_luci-app-frpc=y
-CONFIG_PACKAGE_luci-app-ddnsto=y
-CONFIG_PACKAGE_luci-app-netdata=y
-CONFIG_PACKAGE_luci-app-ttyd=y
-CONFIG_PACKAGE_luci-app-cpufreq=y
-CONFIG_PACKAGE_luci-app-poweroff=y
 CONFIG_PACKAGE_luci-app-macvlan=y
 CONFIG_PACKAGE_luci-app-kvm=y
-CONFIG_PACKAGE_luci-theme-design=y
-CONFIG_PACKAGE_luci-app-flowoffload=y
-CONFIG_PACKAGE_luci-app-bbr=y
-CONFIG_PACKAGE_luci-app-sfe=y
-CONFIG_PACKAGE_luci-app-ssr-plus=y
-CONFIG_PACKAGE_luci-app-vssr=y
-CONFIG_PACKAGE_luci-app-wireguard=y
-CONFIG_PACKAGE_luci-app-mosdns=y
-CONFIG_PACKAGE_luci-app-diskman=y
-CONFIG_PACKAGE_docker=y
-CONFIG_PACKAGE_docker-compose=y
-CONFIG_PACKAGE_python3=y
 CONFIG_PACKAGE_htop=y
 EOF
           make defconfig
 
-      - name: 内置后台下载入口（关键）
+      # 关键！内置多线路下载入口到路由器后台
+      - name: 内置后台多线路下载页
         run: |
           cd openwrt
           mkdir -p package/luci-app-downlink/luasrc/view/downlink
@@ -91,15 +76,15 @@ function index()
     entry({"admin","system","downlink"},template("downlink/index"),_("固件高速下载入口"),99).dependent=false
 end
 EOF
-          # 后台页面文件
+          # 后台页面文件（这里直接写死了4个下载入口）
           cat > package/luci-app-downlink/luasrc/view/downlink/index.htm <<EOF
 <%+header%>
 <h2 style="color:#2c3e50;">超多高速固件下载通道</h2>
 <ul style="font-size:16px;line-height:2.5;list-style-type:disc;padding-left:20px;">
-<li>✅ 仓库主页 Releases 满速下载：<a href="https://github.com/${{ github.repository }}/releases" target="_blank" style="color:#3498db;text-decoration:none;">点击直达</a></li>
-<li>✅ Actions 内置固件下载：<a href="https://github.com/${{ github.repository }}/actions" target="_blank" style="color:#3498db;text-decoration:none;">点击直达</a></li>
-<li>✅ 备用高速通道1：<a href="#" target="_blank" style="color:#3498db;text-decoration:none;">（编译完成后自动更新）</a></li>
-<li>✅ 备用高速通道2：<a href="#" target="_blank" style="color:#3498db;text-decoration:none;">（编译完成后自动更新）</a></li>
+<li>✅ 1. 仓库主页 Releases 满速下载：<a href="https://github.com/${{ github.repository }}/releases" target="_blank" style="color:#3498db;text-decoration:none;">点击直达</a></li>
+<li>✅ 2. Actions 内置固件下载：<a href="https://github.com/${{ github.repository }}/actions" target="_blank" style="color:#3498db;text-decoration:none;">点击直达</a></li>
+<li>✅ 3. 蓝奏云不限速通道：<a href="https://www.lanzou.com/" target="_blank" style="color:#3498db;text-decoration:none;">点击直达（编译完成后更新）</a></li>
+<li>✅ 4. 奶牛快传国内满速：<a href="https://cowtransfer.com/" target="_blank" style="color:#3498db;text-decoration:none;">点击直达（编译完成后更新）</a></li>
 </ul>
 <%+footer%>
 EOF
@@ -112,17 +97,26 @@ EOF
           cd openwrt
           make -j1 V=s
 
-      - name: 上传固件到Actions
+      # GitHub通道1：Actions内置下载
+      - name: 通道1 Actions内置下载
         uses: actions/upload-artifact@v4
         with:
           name: 内置固件下载
           path: openwrt/bin/targets/x86/64/*.img.gz
 
-      - name: 发布到Releases（最快下载入口）
+      # GitHub通道2：Releases满速发布
+      - name: 通道2 Releases正式发布
         if: env.UPLOAD_RELEASE == 'true'
         uses: softprops/action-gh-release@v1
         with:
           tag_name: 全插件X86固件
           name: 6.6内核全插件稳定版
-          body: 内置游戏加速、多开隔离、代理、Docker全套插件，后台自带下载入口
+          body: 内置游戏加速、多开隔离、代理、Docker全套插件，后台自带4个下载入口
           files: openwrt/bin/targets/x86/64/*.img.gz
+
+      # 通道3：奶牛快传国内满速
+      - name: 通道3 奶牛快传上传
+        if: env.UPLOAD_COW == 'true'
+        uses: yanzaiyu/cowtransfer-upload-action@main
+        with:
+          file_path: openwrt/bin/targets/x86/64/*.img.gz
