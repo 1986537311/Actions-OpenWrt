@@ -1,4 +1,4 @@
-name: 多通道全插件X86固件编译
+name: 全插件X86固件编译（语法修复版）
 on:
   workflow_dispatch:
 
@@ -26,41 +26,38 @@ jobs:
           ./scripts/feeds update -a
           ./scripts/feeds install -a
 
-      - name: 写入全插件配置（修复语法错误版）
+      - name: 写入全插件配置（彻底修复语法）
         run: |
           cd openwrt
-          cat > .config << 'EOF'
-CONFIG_TARGET_x86=y
-CONFIG_TARGET_x86_64=y
-CONFIG_TARGET_x86_64_DEVICE_generic=y
-CONFIG_LINUX_6_6=y
-CONFIG_TARGET_ROOTFS_PARTSIZE=8192
-CONFIG_TARGET_KERNEL_PARTSIZE=128
-CONFIG_TARGET_IMAGES_GZIP=y
-CONFIG_TARGET_EXT4=y
-CONFIG_TARGET_SQUASHFS=y
-CONFIG_TARGET_KVM=y
-CONFIG_TARGET_VIRTUALIZATION=y
-
-CONFIG_PACKAGE_luci=y
-CONFIG_PACKAGE_luci-i18n-base-zh-cn=y
-CONFIG_PACKAGE_luci-theme-argon=y
-CONFIG_PACKAGE_luci-app-argon-config=y
-CONFIG_PACKAGE_luci-app-store=y
-CONFIG_PACKAGE_luci-app-passwall=y
-CONFIG_PACKAGE_luci-app-openclash=y
-CONFIG_PACKAGE_luci-app-mwan3=y
-CONFIG_PACKAGE_luci-app-turboacc=y
-CONFIG_PACKAGE_luci-app-alist=y
-CONFIG_PACKAGE_luci-app-dockerman=y
-CONFIG_PACKAGE_luci-app-adguardhome=y
-CONFIG_PACKAGE_luci-app-smartdns=y
-CONFIG_PACKAGE_luci-app-samba4=y
-CONFIG_PACKAGE_luci-app-frpc=y
-CONFIG_PACKAGE_luci-app-macvlan=y
-CONFIG_PACKAGE_luci-app-kvm=y
-CONFIG_PACKAGE_htop=y
-EOF
+          echo "CONFIG_TARGET_x86=y" > .config
+          echo "CONFIG_TARGET_x86_64=y" >> .config
+          echo "CONFIG_TARGET_x86_64_DEVICE_generic=y" >> .config
+          echo "CONFIG_LINUX_6_6=y" >> .config
+          echo "CONFIG_TARGET_ROOTFS_PARTSIZE=8192" >> .config
+          echo "CONFIG_TARGET_KERNEL_PARTSIZE=128" >> .config
+          echo "CONFIG_TARGET_IMAGES_GZIP=y" >> .config
+          echo "CONFIG_TARGET_EXT4=y" >> .config
+          echo "CONFIG_TARGET_SQUASHFS=y" >> .config
+          echo "CONFIG_TARGET_KVM=y" >> .config
+          echo "CONFIG_TARGET_VIRTUALIZATION=y" >> .config
+          echo "CONFIG_PACKAGE_luci=y" >> .config
+          echo "CONFIG_PACKAGE_luci-i18n-base-zh-cn=y" >> .config
+          echo "CONFIG_PACKAGE_luci-theme-argon=y" >> .config
+          echo "CONFIG_PACKAGE_luci-app-argon-config=y" >> .config
+          echo "CONFIG_PACKAGE_luci-app-store=y" >> .config
+          echo "CONFIG_PACKAGE_luci-app-passwall=y" >> .config
+          echo "CONFIG_PACKAGE_luci-app-openclash=y" >> .config
+          echo "CONFIG_PACKAGE_luci-app-mwan3=y" >> .config
+          echo "CONFIG_PACKAGE_luci-app-turboacc=y" >> .config
+          echo "CONFIG_PACKAGE_luci-app-alist=y" >> .config
+          echo "CONFIG_PACKAGE_luci-app-dockerman=y" >> .config
+          echo "CONFIG_PACKAGE_luci-app-adguardhome=y" >> .config
+          echo "CONFIG_PACKAGE_luci-app-smartdns=y" >> .config
+          echo "CONFIG_PACKAGE_luci-app-samba4=y" >> .config
+          echo "CONFIG_PACKAGE_luci-app-frpc=y" >> .config
+          echo "CONFIG_PACKAGE_luci-app-macvlan=y" >> .config
+          echo "CONFIG_PACKAGE_luci-app-kvm=y" >> .config
+          echo "CONFIG_PACKAGE_htop=y" >> .config
           make defconfig
 
       - name: 内置后台8个下载入口
