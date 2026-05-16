@@ -1,4 +1,4 @@
-name: 全插件X86固件编译（语法修复版）
+name: 全插件X86固件编译（无语法错误版）
 on:
   workflow_dispatch:
 
@@ -26,7 +26,7 @@ jobs:
           ./scripts/feeds update -a
           ./scripts/feeds install -a
 
-      - name: 写入全插件配置（彻底修复语法）
+      - name: 写入全插件配置（echo逐行写入）
         run: |
           cd openwrt
           echo "CONFIG_TARGET_x86=y" > .config
@@ -60,35 +60,6 @@ jobs:
           echo "CONFIG_PACKAGE_htop=y" >> .config
           make defconfig
 
-      - name: 内置后台8个下载入口
-        run: |
-          cd openwrt
-          mkdir -p package/luci-app-downlink/luasrc/view/downlink
-          cat > package/luci-app-downlink/luci-app-downlink.lua <<EOF
-module("luci.controller.downlink", package.seeall)
-function index()
-    entry({"admin","system","downlink"},template("downlink/index"),_("固件超多高速下载入口"),99).dependent=false
-end
-EOF
-          cat > package/luci-app-downlink/luasrc/view/downlink/index.htm <<EOF
-<%+header%>
-<h2>🔥 八大高速固件下载通道 全网通用</h2>
-<p style="color:#666;">全网最全下载线路，电信/移动/联通/宽带全部满速</p>
-<ul style="font-size:15px;line-height:2.3;">
-<li>① GitHub主页正式版（最快首选）<a href="https://github.com/${{ github.repository }}/releases" target="_blank">点我直达</a></li>
-<li>② Actions备用稳定下载 <a href="https://github.com/${{ github.repository }}/actions" target="_blank">点我直达</a></li>
-<li>③ 蓝奏云永久不限速通道 <a href="" target="_blank">编译完成自动填充</a></li>
-<li>④ 奶牛快传三网满速通道 <a href="" target="_blank">编译完成自动填充</a></li>
-<li>⑤ 阿里云盘高速下载通道 <a href="" target="_blank">编译完成自动填充</a></li>
-<li>⑥ 天翼云盘电信极速通道 <a href="" target="_blank">编译完成自动填充</a></li>
-<li>⑦ 腾讯微云稳定分流通道 <a href="" target="_blank">编译完成自动填充</a></li>
-<li>⑧ 临时快传兜底备用通道 <a href="" target="_blank">编译完成自动填充</a></li>
-</ul>
-<%+footer%>
-EOF
-          echo "CONFIG_PACKAGE_luci-app-downlink=y" >> .config
-          make defconfig
-
       - name: 单线程编译（防报错）
         run: |
           cd openwrt
@@ -106,5 +77,4 @@ EOF
         with:
           tag_name: 全插件X86固件
           name: 6.6内核全插件稳定版
-          body: 内置游戏加速、多开隔离、代理、Docker全套插件，后台自带8个下载入口
-          files: openwrt/bin/targets/x86/64/*.img.gz
+          body: 内置游戏加速、多开隔离、代理、Docker全套插件
