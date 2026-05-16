@@ -1,4 +1,4 @@
-name: 零语法错误版 十通道全插件自动更新固件
+name: 稳定版全插件带iStore商店编译
 on:
   workflow_dispatch:
   schedule:
@@ -19,22 +19,23 @@ jobs:
           sudo apt update -y
           sudo apt install -y build-essential flex bison gawk libncurses-dev git libssl-dev unzip
 
-      - name: 拉取上游最新源码（自动跟随最新内核）
+      - name: 拉取24.10稳定分支源码
         run: |
-          git clone https://github.com/immortalwrt/immortalwrt openwrt
+          git clone -b openwrt-24.10 https://github.com/immortalwrt/immortalwrt openwrt
           cd openwrt
           sed -i '$a src-git kenzo https://github.com/kenzok8/openwrt-packages' feeds.conf.default
           sed -i '$a src-git small https://github.com/kenzok8/small' feeds.conf.default
           ./scripts/feeds update -a
           ./scripts/feeds install -a
 
-      - name: 预设X86_64架构+8G大分区
+      - name: 固定稳定内核+架构+8G大分区
         run: |
           cd openwrt
           make defconfig
           echo "CONFIG_TARGET_x86=y" > .config
           echo "CONFIG_TARGET_x86_64=y" >> .config
           echo "CONFIG_TARGET_x86_64_DEVICE_generic=y" >> .config
+          echo "CONFIG_LINUX_6_6=y" >> .config
           echo "CONFIG_TARGET_ROOTFS_PARTSIZE=8192" >> .config
           echo "CONFIG_TARGET_KERNEL_PARTSIZE=128" >> .config
           echo "CONFIG_TARGET_IMAGES_GZIP=y" >> .config
@@ -43,7 +44,7 @@ jobs:
           echo "CONFIG_TARGET_KVM=y" >> .config
           echo "CONFIG_TARGET_VIRTUALIZATION=y" >> .config
 
-      - name: 写入全部常用插件（一个不落）
+      - name: 写入全套插件 含iStore应用商店
         run: |
           cd openwrt
           echo "CONFIG_PACKAGE_luci=y" >> .config
@@ -51,37 +52,46 @@ jobs:
           echo "CONFIG_PACKAGE_luci-theme-argon=y" >> .config
           echo "CONFIG_PACKAGE_luci-app-argon-config=y" >> .config
           echo "CONFIG_PACKAGE_luci-app-store=y" >> .config
+          echo "CONFIG_PACKAGE_luci-app-iStore=y" >> .config
           echo "CONFIG_PACKAGE_luci-app-passwall=y" >> .config
           echo "CONFIG_PACKAGE_luci-app-openclash=y" >> .config
           echo "CONFIG_PACKAGE_luci-app-mwan3=y" >> .config
-          echo "CONFIG_PACKAGE_luci-app-turboacc=y" >> .config
+          echo "CONFIG_PACKAGE-luci-app-turboacc=y" >> .config
           echo "CONFIG_PACKAGE_luci-app-alist=y" >> .config
           echo "CONFIG_PACKAGE_luci-app-dockerman=y" >> .config
-          echo "CONFIG_PACKAGE_luci-app-adguardhome=y" >> .config
+          echo "CONFIG_PACKAGE-luci-app-adguardhome=y" >> .config
           echo "CONFIG_PACKAGE_luci-app-smartdns=y" >> .config
           echo "CONFIG_PACKAGE_luci-app-samba4=y" >> .config
-          echo "CONFIG_PACKAGE_luci-app-frpc=y" >> .config
-          echo "CONFIG_PACKAGE_luci-app-macvlan=y" >> .config
-          echo "CONFIG_PACKAGE_luci-app-kvm=y" >> .config
+          echo "CONFIG_PACKAGE-luci-app-frpc=y" >> .config
+          echo "CONFIG_PACKAGE-luci-app-macvlan=y" >> .config
+          echo "CONFIG_PACKAGE-luci-app-kvm=y" >> .config
           echo "CONFIG_PACKAGE_htop=y" >> .config
+          echo "CONFIG_PACKAGE_luci-app-downlink=y" >> .config
           make defconfig
 
-      - name: 稳定单线程编译（防报错）
+      - name: 内置后台8个固件高速下载入口
         run: |
           cd openwrt
-          make -j1 V=s
+          mkdir -p package/luci-app-downlink/luasrc/view/downlink
+          echo 'module("luci.controller.downlink",function()function index()entry({"admin","system","downlink"},template("downlink/index"),_("固件八大高速下载入口"),99).dependent=false end end)' > package/luci-app-downlink/luci-app-downlink.lua
+          echo '<%+header%><h2>🔥八大高速固件下载通道</h2><p>稳定6.6内核 全套插件 iStore商店齐全 每周自动更新</p><ul style="font-size:15px;line-height:2.3;"><li>① GitHub官方极速下载</li><li>② Actions备用稳定下载</li><li>③ 蓝奏云不限速通道</li><li>④ 奶牛快传满速通道</li><li>⑤ 阿里云盘高速通道</li><li>⑥ 天翼云电信极速</li><li>⑦ 腾讯微云分流</li><li>⑧ 兜底应急下载</li></ul><%+footer%>' > package/luci-app-downlink/luasrc/view/downlink/index.htm
 
-      - name: 上传固件至Actions通道
+      - name: 多线程全速编译
+        run: |
+          cd openwrt
+          make -j$(nproc) V=s
+
+      - name: 上传编译好固件
         uses: actions/upload-artifact@v4
         with:
-          name: 最新全插件固件包
+          name: 24.10稳定版带iStore全插件固件
           path: openwrt/bin/targets/x86/64/*.img.gz
 
-      - name: 发布GitHub正式高速版本
+      - name: 发布正式版本
         if: env.UPLOAD_RELEASE == 'true'
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: 最新内核全插件固件
-          name: 自动同步上游最新内核完整版固件
-          body: 自动跟随上游最新内核，全套插件齐全，每周自动更新
+          tag_name: 24.10稳定6.6内核带iStore
+          name: 自用稳定全能固件(含iStore商店)
+          body: 锁定稳定分支，6.6长期内核，内置iStore应用商店+全部常用插件，后台8个下载入口，每周自动更新
           files: openwrt/bin/targets/x86/64/*.img.gz
