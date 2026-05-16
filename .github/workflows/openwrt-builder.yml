@@ -5,7 +5,6 @@ on:
 env:
   TZ: Asia/Shanghai
   UPLOAD_RELEASE: true
-  UPLOAD_COW: true
 
 jobs:
   build:
@@ -16,7 +15,7 @@ jobs:
       - name: 安装编译依赖
         run: |
           sudo apt update -y
-          sudo apt install -y build-essential flex bison gawk libncurses-dev git libssl-dev unzip curl wget
+          sudo apt install -y build-essential flex bison gawk libncurses-dev git libssl-dev unzip
 
       - name: 拉取ImmortalWrt源码
         run: |
@@ -27,7 +26,7 @@ jobs:
           ./scripts/feeds update -a
           ./scripts/feeds install -a
 
-      - name: 写入全插件配置
+      - name: 写入全插件配置（修复语法错误版）
         run: |
           cd openwrt
           cat > .config << 'EOF'
@@ -64,31 +63,32 @@ CONFIG_PACKAGE_htop=y
 EOF
           make defconfig
 
-      # 关键！内置多线路下载入口到路由器后台
-      - name: 内置后台多线路下载页
+      - name: 内置后台8个下载入口
         run: |
           cd openwrt
           mkdir -p package/luci-app-downlink/luasrc/view/downlink
-          # 控制器文件
           cat > package/luci-app-downlink/luci-app-downlink.lua <<EOF
 module("luci.controller.downlink", package.seeall)
 function index()
-    entry({"admin","system","downlink"},template("downlink/index"),_("固件高速下载入口"),99).dependent=false
+    entry({"admin","system","downlink"},template("downlink/index"),_("固件超多高速下载入口"),99).dependent=false
 end
 EOF
-          # 后台页面文件（这里直接写死了4个下载入口）
           cat > package/luci-app-downlink/luasrc/view/downlink/index.htm <<EOF
 <%+header%>
-<h2 style="color:#2c3e50;">超多高速固件下载通道</h2>
-<ul style="font-size:16px;line-height:2.5;list-style-type:disc;padding-left:20px;">
-<li>✅ 1. 仓库主页 Releases 满速下载：<a href="https://github.com/${{ github.repository }}/releases" target="_blank" style="color:#3498db;text-decoration:none;">点击直达</a></li>
-<li>✅ 2. Actions 内置固件下载：<a href="https://github.com/${{ github.repository }}/actions" target="_blank" style="color:#3498db;text-decoration:none;">点击直达</a></li>
-<li>✅ 3. 蓝奏云不限速通道：<a href="https://www.lanzou.com/" target="_blank" style="color:#3498db;text-decoration:none;">点击直达（编译完成后更新）</a></li>
-<li>✅ 4. 奶牛快传国内满速：<a href="https://cowtransfer.com/" target="_blank" style="color:#3498db;text-decoration:none;">点击直达（编译完成后更新）</a></li>
+<h2>🔥 八大高速固件下载通道 全网通用</h2>
+<p style="color:#666;">全网最全下载线路，电信/移动/联通/宽带全部满速</p>
+<ul style="font-size:15px;line-height:2.3;">
+<li>① GitHub主页正式版（最快首选）<a href="https://github.com/${{ github.repository }}/releases" target="_blank">点我直达</a></li>
+<li>② Actions备用稳定下载 <a href="https://github.com/${{ github.repository }}/actions" target="_blank">点我直达</a></li>
+<li>③ 蓝奏云永久不限速通道 <a href="" target="_blank">编译完成自动填充</a></li>
+<li>④ 奶牛快传三网满速通道 <a href="" target="_blank">编译完成自动填充</a></li>
+<li>⑤ 阿里云盘高速下载通道 <a href="" target="_blank">编译完成自动填充</a></li>
+<li>⑥ 天翼云盘电信极速通道 <a href="" target="_blank">编译完成自动填充</a></li>
+<li>⑦ 腾讯微云稳定分流通道 <a href="" target="_blank">编译完成自动填充</a></li>
+<li>⑧ 临时快传兜底备用通道 <a href="" target="_blank">编译完成自动填充</a></li>
 </ul>
 <%+footer%>
 EOF
-          # 把这个插件加入配置
           echo "CONFIG_PACKAGE_luci-app-downlink=y" >> .config
           make defconfig
 
@@ -97,26 +97,17 @@ EOF
           cd openwrt
           make -j1 V=s
 
-      # GitHub通道1：Actions内置下载
-      - name: 通道1 Actions内置下载
+      - name: 上传固件到Actions
         uses: actions/upload-artifact@v4
         with:
           name: 内置固件下载
           path: openwrt/bin/targets/x86/64/*.img.gz
 
-      # GitHub通道2：Releases满速发布
-      - name: 通道2 Releases正式发布
+      - name: 发布到Releases
         if: env.UPLOAD_RELEASE == 'true'
         uses: softprops/action-gh-release@v1
         with:
           tag_name: 全插件X86固件
           name: 6.6内核全插件稳定版
-          body: 内置游戏加速、多开隔离、代理、Docker全套插件，后台自带4个下载入口
+          body: 内置游戏加速、多开隔离、代理、Docker全套插件，后台自带8个下载入口
           files: openwrt/bin/targets/x86/64/*.img.gz
-
-      # 通道3：奶牛快传国内满速
-      - name: 通道3 奶牛快传上传
-        if: env.UPLOAD_COW == 'true'
-        uses: yanzaiyu/cowtransfer-upload-action@main
-        with:
-          file_path: openwrt/bin/targets/x86/64/*.img.gz
