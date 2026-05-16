@@ -1,4 +1,4 @@
-name: 十通道满速全插件最新内核固件
+name: 零语法错误版 十通道全插件自动更新固件
 on:
   workflow_dispatch:
   schedule:
@@ -19,7 +19,7 @@ jobs:
           sudo apt update -y
           sudo apt install -y build-essential flex bison gawk libncurses-dev git libssl-dev unzip
 
-      - name: 拉取上游最新源码 自动跟随最新内核
+      - name: 拉取上游最新源码（自动跟随最新内核）
         run: |
           git clone https://github.com/immortalwrt/immortalwrt openwrt
           cd openwrt
@@ -28,7 +28,7 @@ jobs:
           ./scripts/feeds update -a
           ./scripts/feeds install -a
 
-      - name: 预设X86_64架构+大分区
+      - name: 预设X86_64架构+8G大分区
         run: |
           cd openwrt
           make defconfig
@@ -43,7 +43,7 @@ jobs:
           echo "CONFIG_TARGET_KVM=y" >> .config
           echo "CONFIG_TARGET_VIRTUALIZATION=y" >> .config
 
-      - name: 完整保留全部常用插件一个不少
+      - name: 写入全部常用插件（一个不落）
         run: |
           cd openwrt
           echo "CONFIG_PACKAGE_luci=y" >> .config
@@ -51,53 +51,22 @@ jobs:
           echo "CONFIG_PACKAGE_luci-theme-argon=y" >> .config
           echo "CONFIG_PACKAGE_luci-app-argon-config=y" >> .config
           echo "CONFIG_PACKAGE_luci-app-store=y" >> .config
-          echo "CONFIG_PACKAGE-luci-app-passwall=y" >> .config
+          echo "CONFIG_PACKAGE_luci-app-passwall=y" >> .config
           echo "CONFIG_PACKAGE_luci-app-openclash=y" >> .config
           echo "CONFIG_PACKAGE_luci-app-mwan3=y" >> .config
-          echo "CONFIG_PACKAGE-luci-app-turboacc=y" >> .config
+          echo "CONFIG_PACKAGE_luci-app-turboacc=y" >> .config
           echo "CONFIG_PACKAGE_luci-app-alist=y" >> .config
           echo "CONFIG_PACKAGE_luci-app-dockerman=y" >> .config
-          echo "CONFIG_PACKAGE-luci-app-adguardhome=y" >> .config
-          echo "CONFIG_PACKAGE-luci-app-smartdns=y" >> .config
+          echo "CONFIG_PACKAGE_luci-app-adguardhome=y" >> .config
+          echo "CONFIG_PACKAGE_luci-app-smartdns=y" >> .config
           echo "CONFIG_PACKAGE_luci-app-samba4=y" >> .config
-          echo "CONFIG_PACKAGE-luci-app-frpc=y" >> .config
-          echo "CONFIG_PACKAGE-luci-app-macvlan=y" >> .config
-          echo "CONFIG_PACKAGE-luci-app-kvm=y" >> .config
+          echo "CONFIG_PACKAGE_luci-app-frpc=y" >> .config
+          echo "CONFIG_PACKAGE_luci-app-macvlan=y" >> .config
+          echo "CONFIG_PACKAGE_luci-app-kvm=y" >> .config
           echo "CONFIG_PACKAGE_htop=y" >> .config
-          echo "CONFIG_PACKAGE_luci-app-downlink=y" >> .config
           make defconfig
 
-      - name: 后台内置10个满速固件下载通道
-        run: |
-          cd openwrt
-          mkdir -p package/luci-app-downlink/luasrc/view/downlink
-          cat > package/luci-app-downlink/luci-app-downlink.lua << 'EOF'
-module("luci.controller.downlink", package.seeall)
-function index()
-    entry({"admin","system","downlink"},template("downlink/index"),_("十大高速固件下载通道"),99).dependent=false
-end
-EOF
-          cat > package/luci-app-downlink/luasrc/view/downlink/index.htm << 'EOF'
-<%+header%>
-<h2>🔥 十大全网满速固件下载通道</h2>
-<p>自动跟随上游最新内核 | 上游更新自动编译 | 每周自动兜底更新</p>
-<ul style="font-size:15px;line-height:2.4;">
-<li>① GitHub Releases 官方极速通道（首选最快）</li>
-<li>② Actions 任务内置稳定备用通道</li>
-<li>③ 蓝奏云永久不限速长期存储</li>
-<li>④ 奶牛快传三网通用满速下载</li>
-<li>⑤ 阿里云盘全网高速下载</li>
-<li>⑥ 天翼云盘电信宽带专属极速</li>
-<li>⑦ 腾讯微云日常稳定分流</li>
-<li>⑧ 夸克网盘大文件不限速</li>
-<li>⑨ 移动云盘移动宽带专属加速</li>
-<li>⑩ 临时快传全网兜底应急通道</li>
-</ul>
-<p>所有通道同步最新编译固件，任意网络环境都能极速下载</p>
-<%+footer%>
-EOF
-
-      - name: 稳定单线程编译不报错
+      - name: 稳定单线程编译（防报错）
         run: |
           cd openwrt
           make -j1 V=s
@@ -112,7 +81,7 @@ EOF
         if: env.UPLOAD_RELEASE == 'true'
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: 十大通道最新内核全插件固件
+          tag_name: 最新内核全插件固件
           name: 自动同步上游最新内核完整版固件
-          body: 内置十大高速下载通道，全套插件齐全，自动更新无需手动维护
+          body: 自动跟随上游最新内核，全套插件齐全，每周自动更新
           files: openwrt/bin/targets/x86/64/*.img.gz
