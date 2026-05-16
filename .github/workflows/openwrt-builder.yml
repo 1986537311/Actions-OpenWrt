@@ -1,4 +1,4 @@
-name: 稳定版全插件带iStore商店编译
+name: 稳定版全插件含手机备份全套编译
 on:
   workflow_dispatch:
   schedule:
@@ -44,7 +44,7 @@ jobs:
           echo "CONFIG_TARGET_KVM=y" >> .config
           echo "CONFIG_TARGET_VIRTUALIZATION=y" >> .config
 
-      - name: 写入全套插件 含iStore应用商店
+      - name: 写入全插件 含iStore+手机备份全套
         run: |
           cd openwrt
           echo "CONFIG_PACKAGE_luci=y" >> .config
@@ -56,17 +56,29 @@ jobs:
           echo "CONFIG_PACKAGE_luci-app-passwall=y" >> .config
           echo "CONFIG_PACKAGE_luci-app-openclash=y" >> .config
           echo "CONFIG_PACKAGE_luci-app-mwan3=y" >> .config
-          echo "CONFIG_PACKAGE-luci-app-turboacc=y" >> .config
+          echo "CONFIG_PACKAGE_luci-app-turboacc=y" >> .config
           echo "CONFIG_PACKAGE_luci-app-alist=y" >> .config
           echo "CONFIG_PACKAGE_luci-app-dockerman=y" >> .config
-          echo "CONFIG_PACKAGE-luci-app-adguardhome=y" >> .config
+          echo "CONFIG_PACKAGE_luci-app-adguardhome=y" >> .config
           echo "CONFIG_PACKAGE_luci-app-smartdns=y" >> .config
           echo "CONFIG_PACKAGE_luci-app-samba4=y" >> .config
-          echo "CONFIG_PACKAGE-luci-app-frpc=y" >> .config
-          echo "CONFIG_PACKAGE-luci-app-macvlan=y" >> .config
-          echo "CONFIG_PACKAGE-luci-app-kvm=y" >> .config
+          echo "CONFIG_PACKAGE_luci-app-frpc=y" >> .config
+          echo "CONFIG_PACKAGE_luci-app-macvlan=y" >> .config
+          echo "CONFIG_PACKAGE_luci-app-kvm=y" >> .config
           echo "CONFIG_PACKAGE_htop=y" >> .config
           echo "CONFIG_PACKAGE_luci-app-downlink=y" >> .config
+          # 手机备份全套组件
+          echo "CONFIG_PACKAGE_luci-app-backup=y" >> .config
+          echo "CONFIG_PACKAGE_luci-app-cloudsync=y" >> .config
+          echo "CONFIG_PACKAGE_luci-app-syncthing=y" >> .config
+          echo "CONFIG_PACKAGE_luci-app-filetransfer=y" >> .config
+          echo "CONFIG_PACKAGE_usb-modeswitch=y" >> .config
+          echo "CONFIG_PACKAGE_kmod-usb-storage=y" >> .config
+          echo "CONFIG_PACKAGE_kmod-usb-net=y" >> .config
+          echo "CONFIG_PACKAGE_kmod-usb-net-rndis=y" >> .config
+          echo "CONFIG_PACKAGE_kmod-usb-net-cdc-ether=y" >> .config
+          echo "CONFIG_PACKAGE_mount-utils=y" >> .config
+          echo "CONFIG_PACKAGE_rsync=y" >> .config
           make defconfig
 
       - name: 内置后台8个固件高速下载入口
@@ -74,7 +86,7 @@ jobs:
           cd openwrt
           mkdir -p package/luci-app-downlink/luasrc/view/downlink
           echo 'module("luci.controller.downlink",function()function index()entry({"admin","system","downlink"},template("downlink/index"),_("固件八大高速下载入口"),99).dependent=false end end)' > package/luci-app-downlink/luci-app-downlink.lua
-          echo '<%+header%><h2>🔥八大高速固件下载通道</h2><p>稳定6.6内核 全套插件 iStore商店齐全 每周自动更新</p><ul style="font-size:15px;line-height:2.3;"><li>① GitHub官方极速下载</li><li>② Actions备用稳定下载</li><li>③ 蓝奏云不限速通道</li><li>④ 奶牛快传满速通道</li><li>⑤ 阿里云盘高速通道</li><li>⑥ 天翼云电信极速</li><li>⑦ 腾讯微云分流</li><li>⑧ 兜底应急下载</li></ul><%+footer%>' > package/luci-app-downlink/luasrc/view/downlink/index.htm
+          echo '<%+header%><h2>🔥八大高速固件下载通道</h2><p>6.6稳定内核+iStore商店+手机全套备份功能 每周自动更新</p><ul style="font-size:15px;line-height:2.3;"><li>① GitHub官方极速下载</li><li>② Actions备用稳定下载</li><li>③ 蓝奏云不限速通道</li><li>④ 奶牛快传满速通道</li><li>⑤ 阿里云盘高速通道</li><li>⑥ 天翼云电信极速</li><li>⑦ 腾讯微云分流</li><li>⑧ 兜底应急下载</li></ul><%+footer%>' > package/luci-app-downlink/luasrc/view/downlink/index.htm
 
       - name: 多线程全速编译
         run: |
@@ -84,14 +96,14 @@ jobs:
       - name: 上传编译好固件
         uses: actions/upload-artifact@v4
         with:
-          name: 24.10稳定版带iStore全插件固件
+          name: 稳定版全插件含手机备份固件
           path: openwrt/bin/targets/x86/64/*.img.gz
 
       - name: 发布正式版本
         if: env.UPLOAD_RELEASE == 'true'
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: 24.10稳定6.6内核带iStore
-          name: 自用稳定全能固件(含iStore商店)
-          body: 锁定稳定分支，6.6长期内核，内置iStore应用商店+全部常用插件，后台8个下载入口，每周自动更新
+          tag_name: 24.10稳定6.6内核全功能版
+          name: 自用全能固件(iStore+手机全套备份)
+          body: 锁定稳定分支，6.6长期内核，内置iStore应用商店、全部常用插件、手机USB联网+文件同步+整机备份全套功能，后台8个下载入口，每周自动更新
           files: openwrt/bin/targets/x86/64/*.img.gz
