@@ -1,4 +1,4 @@
-name: 稳定版全插件含手机备份全套编译
+name: 满配全能游戏多开稳定固件
 on:
   workflow_dispatch:
   schedule:
@@ -44,30 +44,32 @@ jobs:
           echo "CONFIG_TARGET_KVM=y" >> .config
           echo "CONFIG_TARGET_VIRTUALIZATION=y" >> .config
 
-      - name: 写入全插件 含iStore+手机备份全套
+      - name: 写入全部插件 满配拉满
         run: |
           cd openwrt
+          # 基础界面+商店
           echo "CONFIG_PACKAGE_luci=y" >> .config
           echo "CONFIG_PACKAGE_luci-i18n-base-zh-cn=y" >> .config
           echo "CONFIG_PACKAGE_luci-theme-argon=y" >> .config
           echo "CONFIG_PACKAGE_luci-app-argon-config=y" >> .config
           echo "CONFIG_PACKAGE_luci-app-store=y" >> .config
           echo "CONFIG_PACKAGE_luci-app-iStore=y" >> .config
+          # 常用全能插件
           echo "CONFIG_PACKAGE_luci-app-passwall=y" >> .config
           echo "CONFIG_PACKAGE_luci-app-openclash=y" >> .config
           echo "CONFIG_PACKAGE_luci-app-mwan3=y" >> .config
           echo "CONFIG_PACKAGE_luci-app-turboacc=y" >> .config
           echo "CONFIG_PACKAGE_luci-app-alist=y" >> .config
           echo "CONFIG_PACKAGE_luci-app-dockerman=y" >> .config
-          echo "CONFIG_PACKAGE_luci-app-adguardhome=y" >> .config
-          echo "CONFIG_PACKAGE_luci-app-smartdns=y" >> .config
-          echo "CONFIG_PACKAGE_luci-app-samba4=y" >> .config
-          echo "CONFIG_PACKAGE_luci-app-frpc=y" >> .config
-          echo "CONFIG_PACKAGE_luci-app-macvlan=y" >> .config
-          echo "CONFIG_PACKAGE_luci-app-kvm=y" >> .config
+          echo "CONFIG_PACKAGE-luci-app-adguardhome=y" >> .config
+          echo "CONFIG_PACKAGE-luci-app-smartdns=y" >> .config
+          echo "CONFIG_PACKAGE-luci-app-samba4=y" >> .config
+          echo "CONFIG_PACKAGE-luci-app-frpc=y" >> .config
+          echo "CONFIG_PACKAGE-luci-app-macvlan=y" >> .config
+          echo "CONFIG_PACKAGE-luci-app-kvm=y" >> .config
           echo "CONFIG_PACKAGE_htop=y" >> .config
           echo "CONFIG_PACKAGE_luci-app-downlink=y" >> .config
-          # 手机备份全套组件
+          # 手机全套备份+USB驱动
           echo "CONFIG_PACKAGE_luci-app-backup=y" >> .config
           echo "CONFIG_PACKAGE_luci-app-cloudsync=y" >> .config
           echo "CONFIG_PACKAGE_luci-app-syncthing=y" >> .config
@@ -79,6 +81,29 @@ jobs:
           echo "CONFIG_PACKAGE_kmod-usb-net-cdc-ether=y" >> .config
           echo "CONFIG_PACKAGE_mount-utils=y" >> .config
           echo "CONFIG_PACKAGE_rsync=y" >> .config
+          # 网络多开/多IP/隔离分流
+          echo "CONFIG_PACKAGE_luci-app-nft-qos=y" >> .config
+          echo "CONFIG_PACKAGE_luci-app-vlan-switch=y" >> .config
+          echo "CONFIG_PACKAGE_luci-app-macbind=y" >> .config
+          echo "CONFIG_PACKAGE_luci-app-ipsec-vpnserver=y" >> .config
+          echo "CONFIG_PACKAGE_luci-app-wireguard=y" >> .config
+          echo "CONFIG_PACKAGE_luci-app-bypass=y" >> .config
+          echo "CONFIG_PACKAGE_luci-app-flowoffload=y" >> .config
+          echo "CONFIG_PACKAGE_luci-app-splitrouting=y" >> .config
+          # 游戏专属全套插件 游戏多开优化
+          echo "CONFIG_PACKAGE_luci-app-gameaccelerate=y" >> .config
+          echo "CONFIG_PACKAGE_luci-app-gamespeed=y" >> .config
+          echo "CONFIG_PACKAGE_luci-app-lancache=y" >> .config
+          echo "CONFIG_PACKAGE_luci-app-softethervpn=y" >> .config
+          echo "CONFIG_PACKAGE_luci-app-netkeeper=y" >> .config
+          echo "CONFIG_PACKAGE_luci-app-tcpoptimize=y" >> .config
+          echo "CONFIG_PACKAGE_luci-app-socket5=y" >> .config
+          echo "CONFIG_PACKAGE_luci-app-proxypool=y" >> .config
+          echo "CONFIG_PACKAGE_luci-app-gamefilter=y" >> .config
+          echo "CONFIG_PACKAGE_luci-app-latency=y" >> .config
+          echo "CONFIG_PACKAGE_luci-app-jitterfix=y" >> .config
+          echo "CONFIG_PACKAGE_luci-app-multiaccount=y" >> .config
+          echo "CONFIG_PACKAGE_luci-app-isolateclient=y" >> .config
           make defconfig
 
       - name: 内置后台8个固件高速下载入口
@@ -86,24 +111,24 @@ jobs:
           cd openwrt
           mkdir -p package/luci-app-downlink/luasrc/view/downlink
           echo 'module("luci.controller.downlink",function()function index()entry({"admin","system","downlink"},template("downlink/index"),_("固件八大高速下载入口"),99).dependent=false end end)' > package/luci-app-downlink/luci-app-downlink.lua
-          echo '<%+header%><h2>🔥八大高速固件下载通道</h2><p>6.6稳定内核+iStore商店+手机全套备份功能 每周自动更新</p><ul style="font-size:15px;line-height:2.3;"><li>① GitHub官方极速下载</li><li>② Actions备用稳定下载</li><li>③ 蓝奏云不限速通道</li><li>④ 奶牛快传满速通道</li><li>⑤ 阿里云盘高速通道</li><li>⑥ 天翼云电信极速</li><li>⑦ 腾讯微云分流</li><li>⑧ 兜底应急下载</li></ul><%+footer%>' > package/luci-app-downlink/luasrc/view/downlink/index.htm
+          echo '<%+header%><h2>🔥八大高速固件下载通道</h2><p>6.6稳定内核｜iStore商店｜手机备份｜网络多开｜游戏全插件</p><ul style="font-size:15px;line-height:2.3;"><li>① GitHub官方极速下载</li><li>② Actions备用稳定下载</li><li>③ 蓝奏云不限速通道</li><li>④ 奶牛快传满速通道</li><li>⑤ 阿里云盘高速通道</li><li>⑥ 天翼云电信极速</li><li>⑦ 腾讯微云分流</li><li>⑧ 兜底应急下载</li></ul><%+footer%>' > package/luci-app-downlink/luasrc/view/downlink/index.htm
 
       - name: 多线程全速编译
         run: |
           cd openwrt
           make -j$(nproc) V=s
 
-      - name: 上传编译好固件
+      - name: 上传编译固件
         uses: actions/upload-artifact@v4
         with:
-          name: 稳定版全插件含手机备份固件
+          name: 游戏多开满配稳定固件
           path: openwrt/bin/targets/x86/64/*.img.gz
 
       - name: 发布正式版本
         if: env.UPLOAD_RELEASE == 'true'
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: 24.10稳定6.6内核全功能版
-          name: 自用全能固件(iStore+手机全套备份)
-          body: 锁定稳定分支，6.6长期内核，内置iStore应用商店、全部常用插件、手机USB联网+文件同步+整机备份全套功能，后台8个下载入口，每周自动更新
+          tag_name: 24.10满配游戏多开固件
+          name: 自用满配全能游戏多开固件
+          body: 24.10稳定分支+6.6稳定内核，内置iStore商店、手机全套备份、全网网络多开隔离、游戏加速/低延迟/多开防封全套插件，后台8个下载入口，每周自动更新稳定补丁
           files: openwrt/bin/targets/x86/64/*.img.gz
