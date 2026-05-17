@@ -27,7 +27,7 @@ jobs:
           sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/.ghcup /usr/local/share/boost /usr/local/lib/android
           sudo apt-get clean
 
-      - name: N1硬件配置（仅修正EOF缩进，其他完全不动）
+      - name: N1硬件配置
         run: |
           cd openwrt
           make defconfig
@@ -46,7 +46,7 @@ CONFIG_PACKAGE_luci-app-amlogic=y
 EOF
           make defconfig
 
-      - name: 全插件+上游升级+8个完整下载开关（所有内容原样保留）
+      - name: 全插件+上游升级+8个完整下载开关
         run: |
           cd openwrt
           cat >> .config <<EOF
@@ -120,7 +120,7 @@ CONFIG_PACKAGE_luci-app-cpu-status=y
 CONFIG_PACKAGE_luci-app-diskman=y
 EOF
 
-          # 上游自动升级脚本（完全不动）
+          # 上游自动升级脚本
           mkdir -p files/usr/sbin files/etc/init.d
           cat > files/usr/sbin/auto-upgrade.sh <<'EOF'
 #!/bin/sh
@@ -150,7 +150,7 @@ stop() {
 EOF
           chmod +x files/etc/init.d/auto-upgrade
 
-          # 8个后台下载开关（完全不动，原样保留）
+          # 8个后台下载开关
           mkdir -p package/dl1/luasrc
           cat > package/dl1/luasrc/controller/dl1.lua <<'EOF'
 module("luci.controller.dl1",package.seeall)
