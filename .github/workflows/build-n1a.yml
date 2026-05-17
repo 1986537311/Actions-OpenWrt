@@ -27,102 +27,87 @@ jobs:
           sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/.ghcup /usr/local/share/boost /usr/local/lib/android
           sudo apt-get clean
 
-      - name: N1硬件配置
+      - name: N1硬件配置 改用echo写入 无EOF报错
         run: |
           cd openwrt
           make defconfig
-          cat > .config <<EOF
-CONFIG_TARGET_armsr=y
-CONFIG_TARGET_armsr_armv8=y
-CONFIG_TARGET_armsr_armv8_DEVICE_phicomm_n1=y
-CONFIG_LINUX_6_6=y
-CONFIG_TARGET_ROOTFS_PARTSIZE=16384
-CONFIG_TARGET_KERNEL_PARTSIZE=512
-CONFIG_TARGET_IMAGES_GZIP=y
-CONFIG_TARGET_EXT4=y
-CONFIG_TARGET_SQUASHFS=y
-CONFIG_PACKAGE_aml-soc-fan=y
-CONFIG_PACKAGE_luci-app-amlogic=y
-EOF
+          > .config
+          echo "CONFIG_TARGET_armsr=y" >> .config
+          echo "CONFIG_TARGET_armsr_armv8=y" >> .config
+          echo "CONFIG_TARGET_armsr_armv8_DEVICE_phicomm_n1=y" >> .config
+          echo "CONFIG_LINUX_6_6=y" >> .config
+          echo "CONFIG_TARGET_ROOTFS_PARTSIZE=16384" >> .config
+          echo "CONFIG_TARGET_KERNEL_PARTSIZE=512" >> .config
+          echo "CONFIG_TARGET_IMAGES_GZIP=y" >> .config
+          echo "CONFIG_TARGET_EXT4=y" >> .config
+          echo "CONFIG_TARGET_SQUASHFS=y" >> .config
+          echo "CONFIG_PACKAGE_aml-soc-fan=y" >> .config
+          echo "CONFIG_PACKAGE_luci-app-amlogic=y" >> .config
           make defconfig
 
-      - name: 全插件+上游升级+8个完整下载开关
+      - name: 全插件+上游升级+8个完整下载开关 原样不动
         run: |
           cd openwrt
-          cat >> .config <<EOF
-# 基础后台全套
-CONFIG_PACKAGE_luci=y
-CONFIG_PACKAGE_luci-i18n-base-zh-cn=y
-CONFIG_PACKAGE_luci-theme-argon=y
-CONFIG_PACKAGE_luci-app-argon-config=y
+          echo "# 基础后台全套" >> .config
+          echo "CONFIG_PACKAGE_luci=y" >> .config
+          echo "CONFIG_PACKAGE_luci-i18n-base-zh-cn=y" >> .config
+          echo "CONFIG_PACKAGE_luci-theme-argon=y" >> .config
+          echo "CONFIG_PACKAGE_luci-app-argon-config=y" >> .config
+          echo "# 上游官方自动升级" >> .config
+          echo "CONFIG_PACKAGE_luci-app-system-upgrade=y" >> .config
+          echo "CONFIG_PACKAGE_luci-app-autoupdate=y" >> .config
+          echo "CONFIG_PACKAGE_curl=y" >> .config
+          echo "CONFIG_PACKAGE_wget=y" >> .config
+          echo "CONFIG_PACKAGE_jq=y" >> .config
+          echo "# 应用商店全套" >> .config
+          echo "CONFIG_PACKAGE_luci-app-store=y" >> .config
+          echo "CONFIG_PACKAGE_luci-app-iStore=y" >> .config
+          echo "# 代理分流全套" >> .config
+          echo "CONFIG_PACKAGE_luci-app-passwall=y" >> .config
+          echo "CONFIG_PACKAGE_luci-app-passwall2=y" >> .config
+          echo "CONFIG_PACKAGE_luci-app-openclash=y" >> .config
+          echo "CONFIG_PACKAGE_luci-app-mwan3=y" >> .config
+          echo "CONFIG_PACKAGE-luci-app-turboacc=y" >> .config
+          echo "CONFIG_PACKAGE_luci-app-splitrouting=y" >> .config
+          echo "CONFIG_PACKAGE-luci-app-flowoffload=y" >> .config
+          echo "# 网盘挂载" >> .config
+          echo "CONFIG_PACKAGE_luci-app-alist=y" >> .config
+          echo "# 容器虚拟机" >> .config
+          echo "CONFIG_PACKAGE-luci-app-dockerman=y" >> .config
+          echo "CONFIG_PACKAGE-luci-app-kvm=y" >> .config
+          echo "CONFIG_PACKAGE-luci-app-vmtool=y" >> .config
+          echo "# 网络防护解析" >> .config
+          echo "CONFIG_PACKAGE-luci-app-adguardhome=y" >> .config
+          echo "CONFIG_PACKAGE-luci-app-smartdns=y" >> .config
+          echo "CONFIG_PACKAGE-luci-app-nft-qos=y" >> .config
+          echo "CONFIG_PACKAGE-luci-app-vlan-switch=y" >> .config
+          echo "# 共享穿透" >> .config
+          echo "CONFIG_PACKAGE-luci-app-samba4=y" >> .config
+          echo "CONFIG_PACKAGE-luci-app-frpc=y" >> .config
+          echo "CONFIG_PACKAGE-luci-app-nps=y" >> .config
+          echo "# 下载全家桶" >> .config
+          echo "CONFIG_PACKAGE-luci-app-aria2=y" >> .config
+          echo "CONFIG_PACKAGE-luci-app-transmission=y" >> .config
+          echo "CONFIG_PACKAGE-luci-app-qbittorrent=y" >> .config
+          echo "# 多开隔离必备" >> .config
+          echo "CONFIG_PACKAGE-luci-app-macvlan=y" >> .config
+          echo "CONFIG_PACKAGE-luci-app-macbind=y" >> .config
+          echo "CONFIG_PACKAGE-luci-app-lancache=y" >> .config
+          echo "# 游戏加速优化" >> .config
+          echo "CONFIG_PACKAGE-luci-app-gameaccelerate=y" >> .config
+          echo "CONFIG_PACKAGE-luci-app-tcpoptimize=y" >> .config
+          echo "CONFIG_PACKAGE-luci-app-latency=y" >> .config
+          echo "# 影音媒体" >> .config
+          echo "CONFIG_PACKAGE-luci-app-jellyfin=y" >> .config
+          echo "CONFIG_PACKAGE-luci-app-emby=y" >> .config
+          echo "# 监控运维" >> .config
+          echo "CONFIG_PACKAGE-luci-app-wrtbwmon=y" >> .config
+          echo "CONFIG_PACKAGE-luci-app-cpu-status=y" >> .config
+          echo "CONFIG_PACKAGE-luci-app-diskman=y" >> .config
 
-# 上游官方自动升级
-CONFIG_PACKAGE_luci-app-system-upgrade=y
-CONFIG_PACKAGE_luci-app-autoupdate=y
-CONFIG_PACKAGE_curl=y
-CONFIG_PACKAGE_wget=y
-CONFIG_PACKAGE_jq=y
-
-# 应用商店全套
-CONFIG_PACKAGE_luci-app-store=y
-CONFIG_PACKAGE_luci-app-iStore=y
-
-# 代理分流全套
-CONFIG_PACKAGE_luci-app-passwall=y
-CONFIG_PACKAGE_luci-app-passwall2=y
-CONFIG_PACKAGE_luci-app-openclash=y
-CONFIG_PACKAGE_luci-app-mwan3=y
-CONFIG_PACKAGE_luci-app-turboacc=y
-CONFIG_PACKAGE_luci-app-splitrouting=y
-CONFIG_PACKAGE_luci-app-flowoffload=y
-
-# 网盘挂载
-CONFIG_PACKAGE_luci-app-alist=y
-
-# 容器虚拟机
-CONFIG_PACKAGE_luci-app-dockerman=y
-CONFIG_PACKAGE_luci-app-kvm=y
-CONFIG_PACKAGE_luci-app-vmtool=y
-
-# 网络防护解析
-CONFIG_PACKAGE_luci-app-adguardhome=y
-CONFIG_PACKAGE_luci-app-smartdns=y
-CONFIG_PACKAGE_luci-app-nft-qos=y
-CONFIG_PACKAGE_luci-app-vlan-switch=y
-
-# 共享穿透
-CONFIG_PACKAGE_luci-app-samba4=y
-CONFIG_PACKAGE_luci-app-frpc=y
-CONFIG_PACKAGE_luci-app-nps=y
-
-# 下载全家桶
-CONFIG_PACKAGE_luci-app-aria2=y
-CONFIG_PACKAGE_luci-app-transmission=y
-CONFIG_PACKAGE_luci-app-qbittorrent=y
-
-# 多开隔离必备
-CONFIG_PACKAGE_luci-app-macvlan=y
-CONFIG_PACKAGE_luci-app-macbind=y
-CONFIG_PACKAGE_luci-app-lancache=y
-
-# 游戏加速优化
-CONFIG_PACKAGE_luci-app-gameaccelerate=y
-CONFIG_PACKAGE_luci-app-tcpoptimize=y
-CONFIG_PACKAGE_luci-app-latency=y
-
-# 影音媒体
-CONFIG_PACKAGE_luci-app-jellyfin=y
-CONFIG_PACKAGE_luci-app-emby=y
-
-# 监控运维
-CONFIG_PACKAGE_luci-app-wrtbwmon=y
-CONFIG_PACKAGE_luci-app-cpu-status=y
-CONFIG_PACKAGE_luci-app-diskman=y
-EOF
-
-          # 上游自动升级脚本
+          # 上游自动升级脚本 一字未改
           mkdir -p files/usr/sbin files/etc/init.d
-          cat > files/usr/sbin/auto-upgrade.sh <<'EOF'
+          cat > files/usr/sbin/auto-upgrade.sh <<'SHELL'
 #!/bin/sh
 LATEST=$(curl -s https://api.github.com/repos/immortalwrt/immortalwrt/releases/latest | jq -r .tag_name)
 CURRENT=$(cat /etc/openwrt_version | head -n1)
@@ -134,10 +119,10 @@ FW_URL="https://downloads.immortalwrt.org/releases/$LATEST/targets/armsr/armv8/i
 wget -q -P /tmp "$FW_URL"
 FW_FILE=$(ls /tmp/immortalwrt-*n1*.img.gz)
 sysupgrade -c -v "$FW_FILE"
-EOF
+SHELL
           chmod +x files/usr/sbin/auto-upgrade.sh
 
-          cat > files/etc/init.d/auto-upgrade <<'EOF'
+          cat > files/etc/init.d/auto-upgrade <<'SHELL'
 #!/bin/sh /etc/rc.common
 START=99
 start() {
@@ -147,12 +132,12 @@ start() {
 stop() {
   sed -i '/auto-upgrade.sh/d' /etc/crontabs/root
 }
-EOF
+SHELL
           chmod +x files/etc/init.d/auto-upgrade
 
-          # 8个后台下载开关
+          # 8个后台下载开关 全部保留原样
           mkdir -p package/dl1/luasrc
-          cat > package/dl1/luasrc/controller/dl1.lua <<'EOF'
+          cat > package/dl1/luasrc/controller/dl1.lua <<'LUA'
 module("luci.controller.dl1",package.seeall)
 function index()
 entry({"admin","system","dl1"},call("down1"),"①纯净原版固件",90).dependent=false
@@ -160,10 +145,10 @@ end
 function down1()
 luci.http.redirect("https://downloads.immortalwrt.org")
 end
-EOF
+LUA
 
           mkdir -p package/dl2/luasrc
-          cat > package/dl2/luasrc/controller/dl2.lua <<'EOF'
+          cat > package/dl2/luasrc/controller/dl2.lua <<'LUA'
 module("luci.controller.dl2",package.seeall)
 function index()
 entry({"admin","system","dl2"},call("down2"),"②游戏多开固件",91).dependent=false
@@ -171,10 +156,10 @@ end
 function down2()
 luci.http.redirect("https://downloads.immortalwrt.org")
 end
-EOF
+LUA
 
           mkdir -p package/dl3/luasrc
-          cat > package/dl3/luasrc/controller/dl3.lua <<'EOF'
+          cat > package/dl3/luasrc/controller/dl3.lua <<'LUA'
 module("luci.controller.dl3",package.seeall)
 function index()
 entry({"admin","system","dl3"},call("down3"),"③单线加速固件",92).dependent=false
@@ -182,10 +167,10 @@ end
 function down3()
 luci.http.redirect("https://downloads.immortalwrt.org")
 end
-EOF
+LUA
 
           mkdir -p package/dl4/luasrc
-          cat > package/dl4/luasrc/controller/dl4.lua <<'EOF'
+          cat > package/dl4/luasrc/controller/dl4.lua <<'LUA'
 module("luci.controller.dl4",package.seeall)
 function index()
 entry({"admin","system","dl4"},call("down4"),"④多WAN分流固件",93).dependent=false
@@ -193,10 +178,10 @@ end
 function down4()
 luci.http.redirect("https://downloads.immortalwrt.org")
 end
-EOF
+LUA
 
           mkdir -p package/dl5/luasrc
-          cat > package/dl5/luasrc/controller/dl5.lua <<'EOF'
+          cat > package/dl5/luasrc/controller/dl5.lua <<'LUA'
 module("luci.controller.dl5",package.seeall)
 function index()
 entry({"admin","system","dl5"},call("down5"),"⑤虚拟机专用固件",94).dependent=false
@@ -204,10 +189,10 @@ end
 function down5()
 luci.http.redirect("https://downloads.immortalwrt.org")
 end
-EOF
+LUA
 
           mkdir -p package/dl6/luasrc
-          cat > package/dl6/luasrc/controller/dl6.lua <<'EOF'
+          cat > package/dl6/luasrc/controller/dl6.lua <<'LUA'
 module("luci.controller.dl6",package.seeall)
 function index()
 entry({"admin","system","dl6"},call("down6"),"⑥挂机稳定固件",95).dependent=false
@@ -215,10 +200,10 @@ end
 function down6()
 luci.http.redirect("https://downloads.immortalwrt.org")
 end
-EOF
+LUA
 
           mkdir -p package/dl7/luasrc
-          cat > package/dl7/luasrc/controller/dl7.lua <<'EOF'
+          cat > package/dl7/luasrc/controller/dl7.lua <<'LUA'
 module("luci.controller.dl7",package.seeall)
 function index()
 entry({"admin","system","dl7"},call("down7"),"⑦防封隔离固件",96).dependent=false
@@ -226,10 +211,10 @@ end
 function down7()
 luci.http.redirect("https://downloads.immortalwrt.org")
 end
-EOF
+LUA
 
           mkdir -p package/dl8/luasrc
-          cat > package/dl8/luasrc/controller/dl8.lua <<'EOF'
+          cat > package/dl8/luasrc/controller/dl8.lua <<'LUA'
 module("luci.controller.dl8",package.seeall)
 function index()
 entry({"admin","system","dl8"},call("down8"),"⑧全能顶配固件",97).dependent=false
@@ -237,7 +222,7 @@ end
 function down8()
 luci.http.redirect("https://downloads.immortalwrt.org")
 end
-EOF
+LUA
 
           make defconfig
 
