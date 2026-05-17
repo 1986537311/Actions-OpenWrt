@@ -1,88 +1,111 @@
-name: N1-6.6内核-512M+16G（补全依赖版）
+name: N1-6.6内核-512M+16G（最终优化版）
 on:
-  workflow_dispatch:
+  workflow_dispatch
+
 jobs:
   build:
     runs-on: ubuntu-22.04
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
+
+      # 新增缓存优化（可选，大幅缩短编译时间）
+      - name: 缓存编译文件
+        uses: actions/cache@v4
+        with:
+          path: |
+            openwrt/.ccache
+            openwrt/build_dir
+            openwrt/staging_dir
+          key: ${{ runner.os }}-openwrt-${{ hashFiles('openwrt/.config') }}
+          restore-keys: |
+            ${{ runner.os }}-openwrt-
+
       - name: 安装完整编译依赖（修复报错）
         run: |
           sudo apt update && sudo apt install -y \
           build-essential flex bison gawk libncurses-dev git curl wget jq \
           libusb-1.0-0-dev libev-dev libnl-3-dev libnl-genl-3-dev libssl-dev \
           golang rustc cargo nodejs npm
-      - name: 拉源码+全套完整插件源
+
+      - name: 拉源码+全套完整插件源（固定版本防更新）
         run: |
-          git clone https://github.com/immortalwrt/immortalwrt openwrt
+          git clone https://github.com/immortalwrt/immortalwrt openwrt --depth 1
           cd openwrt
           sed -i '$a src-git kenzo https://github.com/kenzok8/openwrt-packages' feeds.conf.default
           sed -i '$a src-git small https://github.com/kenzok8/small' feeds.conf.default
           ./scripts/feeds update -a
           ./scripts/feeds install -a
+
       - name: 锁定6.6内核 + 还原分区 512M+16G
         run: |
           cd openwrt
           make defconfig
-          sed -i 's/CONFIG_LINUX_.*/CONFIG_LINUX_6_6=y/' .config
+          sed -i 's/CONFIG_LINUX_.*/# CONFIG_LINUX_.* is not set/' .config
           sed -i 's/CONFIG_TARGET_KERNEL_PARTSIZE=.*/CONFIG_TARGET_KERNEL_PARTSIZE=512/' .config
           sed -i 's/CONFIG_TARGET_ROOTFS_PARTSIZE=.*/CONFIG_TARGET_ROOTFS_PARTSIZE=16384/' .config
           make defconfig
+
       - name: 添加8个后台下载按钮
         run: |
           cd openwrt
-          mkdir -p package/dl1/luasrc/controller
-          echo 'module("luci.controller.dl1",package.seeall)' > package/dl1/luasrc/controller/dl1.lua
-          echo 'function index()' >> package/dl1/luasrc/controller/dl1.lua
-          echo 'entry({"admin","system","dl1"},call("down1"),"①纯净原版",90).dependent=false' >> package/dl1/luasrc/controller/dl1.lua
-          echo 'end' >> package/dl1/luasrc/controller/dl1.lua
-          echo 'function down1() luci.http.redirect("https://downloads.immortalwrt.org") end' >> package/dl1/luasrc/controller/dl1.lua
-          mkdir -p package/dl2/luasrc/controller
-          echo 'module("luci.controller.dl2",package.seeall)' > package/dl2/luasrc/controller/dl2.lua
-          echo 'function index()' >> package/dl2/luasrc/controller/dl2.lua
-          echo 'entry({"admin","system","dl2"},call("down2"),"②游戏多开",91).dependent=false' >> package/dl2/luasrc/controller/dl2.lua
-          echo 'end' >> package/dl2/luasrc/controller/dl2.lua
-          echo 'function down2() luci.http.redirect("https://downloads.immortalwrt.org") end' >> package/dl2/luasrc/controller/dl2.lua
-          mkdir -p package/dl3/luasrc/controller
-          echo 'module("luci.controller.dl3",package.seeall)' > package/dl3/luasrc/controller/dl3.lua
-          echo 'function index()' >> package/dl3/luasrc/controller/dl3.lua
-          echo 'entry({"admin","system","dl3"},call("down3"),"③单线加速",92).dependent=false' >> package/dl3/luasrc/controller/dl3.lua
-          echo 'end' >> package/dl3/luasrc/controller/dl3.lua
-          echo 'function down3() luci.http.redirect("https://downloads.immortalwrt.org") end' >> package/dl3/luasrc/controller/dl3.lua
-          mkdir -p package/dl4/luasrc/controller
-          echo 'module("luci.controller.dl4",package.seeall)' > package/dl4/luasrc/controller/dl4.lua
-          echo 'function index()' >> package/dl4/luasrc/controller/dl4.lua
-          echo 'entry({"admin","system","dl4"},call("down4"),"④多WAN分流",93).dependent=false' >> package/dl4/luasrc/controller/dl4.lua
-          echo 'end' >> package/dl4/luasrc/controller/dl4.lua
-          echo 'function down4() luci.http.redirect("https://downloads.immortalwrt.org") end' >> package/dl4/luasrc/controller/dl4.lua
-          mkdir -p package/dl5/luasrc/controller
-          echo 'module("luci.controller.dl5",package.seeall)' > package/dl5/luasrc/controller/dl5.lua
-          echo 'function index()' >> package/dl5/luasrc/controller/dl5.lua
-          echo 'entry({"admin","system","dl5"},call("down5"),"⑤虚拟机专用",94).dependent=false' >> package/dl5/luasrc/controller/dl5.lua
-          echo 'end' >> package/dl5/luasrc/controller/dl5.lua
-          echo 'function down5() luci.http.redirect("https://downloads.immortalwrt.org") end' >> package/dl5/luasrc/controller/dl5.lua
-          mkdir -p package/dl6/luasrc/controller
-          echo 'module("luci.controller.dl6",package.seeall)' > package/dl6/luasrc/controller/dl6.lua
-          echo 'function index()' >> package/dl6/luasrc/controller/dl6.lua
-          echo 'entry({"admin","system","dl6"},call("down6"),"⑥挂机稳定",95).dependent=false' >> package/dl6/luasrc/controller/dl6.lua
-          echo 'end' >> package/dl6/luasrc/controller/dl6.lua
-          echo 'function down6() luci.http.redirect("https://downloads.immortalwrt.org") end' >> package/dl6/luasrc/controller/dl6.lua
-          mkdir -p package/dl7/luasrc/controller
-          echo 'module("luci.controller.dl7",package.seeall)' > package/dl7/luasrc/controller/dl7.lua
-          echo 'function index()' >> package/dl7/luasrc/controller/dl7.lua
-          echo 'entry({"admin","system","dl7"},call("down7"),"⑦防封隔离",96).dependent=false' >> package/dl7/luasrc/controller/dl7.lua
-          echo 'end' >> package/dl7/luasrc/controller/dl7.lua
-          echo 'function down7() luci.http.redirect("https://downloads.immortalwrt.org") end' >> package/dl7/luasrc/controller/dl7.lua
-          mkdir -p package/dl8/luasrc/controller
-          echo 'module("luci.controller.dl8",package.seeall)' > package/dl8/luasrc/controller/dl8.lua
-          echo 'function index()' >> package/dl8/luasrc/controller/dl8.lua
-          echo 'entry({"admin","system","dl8"},call("down8"),"⑧全能顶配",97).dependent=false' >> package/dl8/luasrc/controller/dl8.lua
-          echo 'end' >> package/dl8/luasrc/controller/dl8.lua
-          echo 'function down8() luci.http.redirect("https://downloads.immortalwrt.org") end' >> package/dl8/luasrc/controller/dl8.lua
-      - name: 开始编译固件
-        run: cd openwrt && make -j$(nproc) V=s
+          mkdir -p package/d11/luasrc/controller
+          echo 'module("luci.controller.d11",package.seeall)' > package/d11/luasrc/controller/d11.lua
+          echo 'function index()' >> package/d11/luasrc/controller/d11.lua
+          echo 'entry({"admin","system","d11"},call("down1"),"@纯净原版",90).dependent=false' >> package/d11/luasrc/controller/d11.lua
+          echo 'end' >> package/d11/luasrc/controller/d11.lua
+          echo 'function down1() luci.http.redirect("https://downloads.immortalwrt.org") end' >> package/d11/luasrc/controller/d11.lua
+          mkdir -p package/d12/luasrc/controller
+          echo 'module("luci.controller.d12",package.seeall)' > package/d12/luasrc/controller/d12.lua
+          echo 'function index()' >> package/d12/luasrc/controller/d12.lua
+          echo 'entry({"admin","system","d12"},call("down2"),"@游戏多开",91).dependent=false' >> package/d12/luasrc/controller/d12.lua
+          echo 'end' >> package/d12/luasrc/controller/d12.lua
+          echo 'function down2() luci.http.redirect("https://downloads.immortalwrt.org") end' >> package/d12/luasrc/controller/d12.lua
+          mkdir -p package/d13/luasrc/controller
+          echo 'module("luci.controller.d13",package.seeall)' > package/d13/luasrc/controller/d13.lua
+          echo 'function index()' >> package/d13/luasrc/controller/d13.lua
+          echo 'entry({"admin","system","d13"},call("down3"),"@单线加速",92).dependent=false' >> package/d13/luasrc/controller/d13.lua
+          echo 'end' >> package/d13/luasrc/controller/d13.lua
+          echo 'function down3() luci.http.redirect("https://downloads.immortalwrt.org") end' >> package/d13/luasrc/controller/d13.lua
+          mkdir -p package/d14/luasrc/controller
+          echo 'module("luci.controller.d14",package.seeall)' > package/d14/luasrc/controller/d14.lua
+          echo 'function index()' >> package/d14/luasrc/controller/d14.lua
+          echo 'entry({"admin","system","d14"},call("down4"),"@多WAN分流",93).dependent=false' >> package/d14/luasrc/controller/d14.lua
+          echo 'end' >> package/d14/luasrc/controller/d14.lua
+          echo 'function down4() luci.http.redirect("https://downloads.immortalwrt.org") end' >> package/d14/luasrc/controller/d14.lua
+          mkdir -p package/d15/luasrc/controller
+          echo 'module("luci.controller.d15",package.seeall)' > package/d15/luasrc/controller/d15.lua
+          echo 'function index()' >> package/d15/luasrc/controller/d15.lua
+          echo 'entry({"admin","system","d15"},call("down5"),"@虚拟机专用",94).dependent=false' >> package/d15/luasrc/controller/d15.lua
+          echo 'end' >> package/d15/luasrc/controller/d15.lua
+          echo 'function down5() luci.http.redirect("https://downloads.immortalwrt.org") end' >> package/d15/luasrc/controller/d15.lua
+          mkdir -p package/d16/luasrc/controller
+          echo 'module("luci.controller.d16",package.seeall)' > package/d16/luasrc/controller/d16.lua
+          echo 'function index()' >> package/d16/luasrc/controller/d16.lua
+          echo 'entry({"admin","system","d16"},call("down6"),"@挂机稳定",95).dependent=false' >> package/d16/luasrc/controller/d16.lua
+          echo 'end' >> package/d16/luasrc/controller/d16.lua
+          echo 'function down6() luci.http.redirect("https://downloads.immortalwrt.org") end' >> package/d16/luasrc/controller/d16.lua
+          mkdir -p package/d17/luasrc/controller
+          echo 'module("luci.controller.d17",package.seeall)' > package/d17/luasrc/controller/d17.lua
+          echo 'function index()' >> package/d17/luasrc/controller/d17.lua
+          echo 'entry({"admin","system","d17"},call("down7"),"@防封隔离",96).dependent=false' >> package/d17/luasrc/controller/d17.lua
+          echo 'end' >> package/d17/luasrc/controller/d17.lua
+          echo 'function down7() luci.http.redirect("https://downloads.immortalwrt.org") end' >> package/d17/luasrc/controller/d17.lua
+          mkdir -p package/d18/luasrc/controller
+          echo 'module("luci.controller.d18",package.seeall)' > package/d18/luasrc/controller/d18.lua
+          echo 'function index()' >> package/d18/luasrc/controller/d18.lua
+          echo 'entry({"admin","system","d18"},call("down8"),"@全能顶配",97).dependent=false' >> package/d18/luasrc/controller/d18.lua
+          echo 'end' >> package/d18/luasrc/controller/d18.lua
+          echo 'function down8() luci.http.redirect("https://downloads.immortalwrt.org") end' >> package/d18/luasrc/controller/d18.lua
+
+      - name: 开始编译固件（输出错误日志）
+        run: |
+          cd openwrt
+          make -j$(nproc) V=s 2>&1 | tee build.log || (cat build.log && exit 1)
+
       - name: 上传成品固件
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: N1-6.6内核-512M内核16G空间
           path: openwrt/bin/targets/armsr/armv8/*.img.gz
