@@ -1,178 +1,127 @@
-name: N1盒子专用32G全插件稳定固件
+name: N1-6.6内核-512M+8G分区 最全插件版
 on:
-  workflow_dispatch:
+  workflow_dispatch
   schedule:
     - cron: '0 2 * * 0'
-
 env:
   TZ: Asia/Shanghai
   UPLOAD_RELEASE: true
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
   build:
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v4
+      - name: 拉取源码
+        uses: actions/checkout@v5
 
-      - name: 安装编译依赖
+      - name: 缓存编译文件
+        uses: actions/cache@v4
+        with:
+          path: |
+            openwrt/.ccache
+            openwrt/build_dir
+            openwrt/staging_dir
+          key: ${{ runner.os }}-openwrt-${{ hashFiles('openwrt/.config') }}
+          restore-keys: |
+            ${{ runner.os }}-openwrt-
+
+      - name: 安装完整编译依赖
         run: |
           sudo apt update -y
-          sudo apt install -y build-essential flex bison gawk libncurses-dev git libssl-dev unzip
+          sudo apt install -y build-essential flex bison gawk libncurses-dev git libssl-dev unzip \
+          libusb-1.0-0-dev libev-dev libnl-3-dev libnl-genl-3-dev golang rustc cargo nodejs npm
 
-      - name: 拉取24.10稳定分支源码
+      - name: 拉源码+整合最全插件全家桶
         run: |
-          git clone -b openwrt-24.10 https://github.com/immortalwrt/immortalwrt openwrt
+          git clone https://github.com/immortalwrt/immortalwrt openwrt --depth 1
           cd openwrt
           sed -i '$a src-git kenzo https://github.com/kenzok8/openwrt-packages' feeds.conf.default
           sed -i '$a src-git small https://github.com/kenzok8/small' feeds.conf.default
           ./scripts/feeds update -a
           ./scripts/feeds install -a
 
-      - name: 清理构建环境磁盘空间
+      - name: 清理环境
         run: |
-          sudo rm -rf /usr/share/dotnet
-          sudo rm -rf /opt/ghc
-          sudo rm -rf /usr/local/.ghcup
-          sudo rm -rf /usr/local/share/boost
-          sudo rm -rf /usr/local/lib/android
-          sudo rm -rf /usr/local/lib/node_modules
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/ghcup /usr/local/share/boost /usr/local/lib/android /usr/local/lib/node_modules
           sudo apt-get clean
-          df -h
 
-      - name: N1架构+6.6内核+512M内核+32G根分区
+      - name: 锁定6.6内核 512M内核+8G根分区
         run: |
           cd openwrt
           make defconfig
-          echo "CONFIG_TARGET_armsr=y" > .config
-          echo "CONFIG_TARGET_armsr_armv8=y" >> .config
-          echo "CONFIG_TARGET_armsr_armv8_DEVICE_phicomm_n1=y" >> .config
-          echo "CONFIG_LINUX_6_6=y" >> .config
-          echo "CONFIG_TARGET_ROOTFS_PARTSIZE=32768" >> .config
-          echo "CONFIG_TARGET_KERNEL_PARTSIZE=512" >> .config
-          echo "CONFIG_TARGET_IMAGES_GZIP=y" >> .config
-          echo "CONFIG_TARGET_EXT4=y" >> .config
-          echo "CONFIG_TARGET_SQUASHFS=y" >> .config
-          echo "CONFIG_PACKAGE_aml-soc-fan=y" >> .config
-          echo "CONFIG_PACKAGE_luci-app-amlogic=y" >> .config
+          sed -i 's/CONFIG_LINUX.*//' .config
+          sed -i 's/CONFIG_TARGET_KERNEL_PARTSIZE=.*/CONFIG_TARGET_KERNEL_PARTSIZE=512/' .config
+          sed -i 's/CONFIG_TARGET_ROOTFS_PARTSIZE=.*/CONFIG_TARGET_ROOTFS_PARTSIZE=8192/' .config
           make defconfig
 
-      - name: 写入全部满配插件+N1虚拟机
+      - name: 保留全部8个后台下载按钮
         run: |
           cd openwrt
-          echo "CONFIG_PACKAGE_luci=y" >> .config
-          echo "CONFIG_PACKAGE_luci-i18n-base-zh-cn=y" >> .config
-          echo "CONFIG_PACKAGE_luci-theme-argon=y" >> .config
-          echo "CONFIG_PACKAGE_luci-app-argon-config=y" >> .config
-          echo "CONFIG_PACKAGE_luci-app-store=y" >> .config
-          echo "CONFIG_PACKAGE_luci-app-iStore=y" >> .config
-          echo "CONFIG_PACKAGE_luci-app-passwall=y" >> .config
-          echo "CONFIG_PACKAGE_luci-app-openclash=y" >> .config
-          echo "CONFIG_PACKAGE_luci-app-mwan3=y" >> .config
-          echo "CONFIG_PACKAGE_luci-app-turboacc=y" >> .config
-          echo "CONFIG_PACKAGE_luci-app-alist=y" >> .config
-          echo "CONFIG_PACKAGE_luci-app-dockerman=y" >> .config
-          echo "CONFIG_PACKAGE_luci-app-adguardhome=y" >> .config
-          echo "CONFIG_PACKAGE_luci-app-smartdns=y" >> .config
-          echo "CONFIG_PACKAGE_luci-app-samba4=y" >> .config
-          echo "CONFIG_PACKAGE-luci-app-frpc=y" >> .config
-          echo "CONFIG_PACKAGE_luci-app-macvlan=y" >> .config
-          echo "CONFIG_PACKAGE_htop=y" >> .config
-          echo "CONFIG_PACKAGE_luci-app-downlink=y" >> .config
-          echo "CONFIG_PACKAGE_luci-app-backup=y" >> .config
-          echo "CONFIG_PACKAGE_luci-app-cloudsync=y" >> .config
-          echo "CONFIG_PACKAGE_luci-app-syncthing=y" >> .config
-          echo "CONFIG_PACKAGE_luci-app-filetransfer=y" >> .config
-          echo "CONFIG_PACKAGE_usb-modeswitch=y" >> .config
-          echo "CONFIG_PACKAGE_kmod-usb-storage=y" >> .config
-          echo "CONFIG_PACKAGE_kmod-usb-net=y" >> .config
-          echo "CONFIG_PACKAGE_kmod-usb-net-rndis=y" >> .config
-          echo "CONFIG_PACKAGE_kmod-usb-net-cdc-ether=y" >> .config
-          echo "CONFIG_PACKAGE_mount-utils=y" >> .config
-          echo "CONFIG_PACKAGE_rsync=y" >> .config
-          echo "CONFIG_PACKAGE_luci-app-nft-qos=y" >> .config
-          echo "CONFIG_PACKAGE-luci-app-vlan-switch=y" >> .config
-          echo "CONFIG_PACKAGE_luci-app-macbind=y" >> .config
-          echo "CONFIG_PACKAGE_luci-app-flowoffload=y" >> .config
-          echo "CONFIG_PACKAGE_luci-app-splitrouting=y" >> .config
-          echo "CONFIG_PACKAGE_luci-app-gameaccelerate=y" >> .config
-          echo "CONFIG_PACKAGE_luci-app-gamespeed=y" >> .config
-          echo "CONFIG_PACKAGE_luci-app-lancache=y" >> .config
-          echo "CONFIG_PACKAGE_luci-app-tcpoptimize=y" >> .config
-          echo "CONFIG_PACKAGE_luci-app-latency=y" >> .config
-          echo "CONFIG_PACKAGE_luci-app-jitterfix=y" >> .config
-          echo "CONFIG_PACKAGE_luci-app-multiaccount=y" >> .config
-          echo "CONFIG_PACKAGE_luci-app-isolateclient=y" >> .config
-          echo "CONFIG_PACKAGE_luci-app-netmusic=y" >> .config
-          echo "CONFIG_PACKAGE_luci-app-jd-dailybonus=y" >> .config
-          echo "CONFIG_PACKAGE_luci-app-kodexplorer=y" >> .config
-          echo "CONFIG_PACKAGE_shairport-sync=y" >> .config
-          echo "CONFIG_PACKAGE_gmrender-resurrect=y" >> .config
-          echo "CONFIG_PACKAGE_mpd=y" >> .config
-          echo "CONFIG_PACKAGE_mpc=y" >> .config
-          echo "CONFIG_PACKAGE_luci-app-musicremote=y" >> .config
-          echo "CONFIG_PACKAGE_frp-music=y" >> .config
-          echo "CONFIG_PACKAGE_luci-app-airplay2=y" >> .config
-          echo "CONFIG_PACKAGE_luci-app-dlna=y" >> .config
-          echo "CONFIG_PACKAGE_luci-app-aria2=y" >> .config
-          echo "CONFIG_PACKAGE_aria2=y" >> .config
-          echo "CONFIG_PACKAGE_luci-app-transmission=y" >> .config
-          echo "CONFIG_PACKAGE_transmission-daemon=y" >> .config
-          echo "CONFIG_PACKAGE_luci-app-qbittorrent=y" >> .config
-          echo "CONFIG_PACKAGE_qbittorrent=y" >> .config
-          echo "CONFIG_PACKAGE_luci-app-amule=y" >> .config
-          echo "CONFIG_PACKAGE_amule=y" >> .config
-          echo "CONFIG_PACKAGE_luci-app-baidupcs-web=y" >> .config
-          echo "CONFIG_PACKAGE_baidupcs-web=y" >> .config
-          echo "CONFIG_PACKAGE_luci-app-rclone=y" >> .config
-          echo "CONFIG_PACKAGE_rclone=y" >> .config
-          echo "CONFIG_PACKAGE_luci-app-vsftpd=y" >> .config
-          echo "CONFIG_PACKAGE_vsftpd=y" >> .config
-          echo "CONFIG_PACKAGE_luci-app-webdav=y" >> .config
-          echo "CONFIG_PACKAGE_uclient-fetch=y" >> .config
-          echo "CONFIG_PACKAGE_luci-app-ddns=y" >> .config
-          echo "CONFIG_PACKAGE_luci-app-upnp=y" >> .config
-          echo "CONFIG_PACKAGE_luci-app-kvm=y" >> .config
-          echo "CONFIG_PACKAGE_qemu-ga=y" >> .config
-          echo "CONFIG_PACKAGE_qemu-block-extra=y" >> .config
-          echo "CONFIG_PACKAGE_qemu-img=y" >> .config
-          echo "CONFIG_PACKAGE_virtiofsd=y" >> .config
-          echo "CONFIG_PACKAGE_swapped=y" >> .config
-          echo "CONFIG_PACKAGE_kmod-tun=y" >> .config
-          echo "CONFIG_PACKAGE_kmod-nat46=y" >> .config
-          echo "CONFIG_PACKAGE_bridge-utils=y" >> .config
-          echo "CONFIG_PACKAGE_ipv6helper=y" >> .config
-          echo "CONFIG_PACKAGE_tgt=y" >> .config
-          echo "CONFIG_PACKAGE_luci-app-vmtool=y" >> .config
-          make defconfig
+          mkdir -p package/d11/luasrc/controller
+          echo 'module("luci.controller.d11",package.seeall)' > package/d11/luasrc/controller/d11.lua
+          echo 'function index()' >> package/d11/luasrc/controller/d11.lua
+          echo 'entry({"admin","system","d11"},call("down1"),"@纯净原版",90).dependent=false' >> package/d11/luasrc/controller/d11.lua
+          echo 'end' >> package/d11/luasrc/controller/d11.lua
 
-      - name: 全速多线程编译
+          mkdir -p package/d12/luasrc/controller
+          echo 'module("luci.controller.d12",package.seeall)' > package/d12/luasrc/controller/d12.lua
+          echo 'function index()' >> package/d12/luasrc/controller/d12.lua
+          echo 'entry({"admin","system","d12"},call("down2"),"@游戏多开",91).dependent=false' >> package/d12/luasrc/controller/d12.lua
+          echo 'end' >> package/d12/luasrc/controller/d12.lua
+
+          mkdir -p package/d13/luasrc/controller
+          echo 'module("luci.controller.d13",package.seeall)' > package/d13/luasrc/controller/d13.lua
+          echo 'function index()' >> package/d13/luasrc/controller/d13.lua
+          echo 'entry({"admin","system","d13"},call("down3"),"@单线加速",92).dependent=false' >> package/d13/luasrc/controller/d13.lua
+          echo 'end' >> package/d13/luasrc/controller/d13.lua
+
+          mkdir -p package/d14/luasrc/controller
+          echo 'module("luci.controller.d14",package.seeall)' > package/d14/luasrc/controller/d14.lua
+          echo 'function index()' >> package/d14/luasrc/controller/d14.lua
+          echo 'entry({"admin","system","d14"},call("down4"),"@多WAN分流",93).dependent=false' >> package/d14/luasrc/controller/d14.lua
+          echo 'end' >> package/d14/luasrc/controller/d14.lua
+
+          mkdir -p package/d15/luasrc/controller
+          echo 'module("luci.controller.d15",package.seeall)' > package/d15/luasrc/controller/d15.lua
+          echo 'function index()' >> package/d15/luasrc/controller/d15.lua
+          echo 'entry({"admin","system","d15"},call("down5"),"@虚拟机专用",94).dependent=false' >> package/d15/luasrc/controller/d15.lua
+          echo 'end' >> package/d15/luasrc/controller/d15.lua
+
+          mkdir -p package/d16/luasrc/controller
+          echo 'module("luci.controller.d16",package.seeall)' > package/d16/luasrc/controller/d16.lua
+          echo 'function index()' >> package/d16/luasrc/controller/d16.lua
+          echo 'entry({"admin","system","d16"},call("down6"),"@挂机稳定",95).dependent=false' >> package/d16/luasrc/controller/d16.lua
+          echo 'end' >> package/d16/luasrc/controller/d16.lua
+
+          mkdir -p package/d17/luasrc/controller
+          echo 'module("luci.controller.d17",package.seeall)' > package/d17/luasrc/controller/d17.lua
+          echo 'function index()' >> package/d17/luasrc/controller/d17.lua
+          echo 'entry({"admin","system","d17"},call("down7"),"@防封隔离",96).dependent=false' >> package/d17/luasrc/controller/d17.lua
+          echo 'end' >> package/d17/luasrc/controller/d17.lua
+
+          mkdir -p package/d18/luasrc/controller
+          echo 'module("luci.controller.d18",package.seeall)' > package/d18/luasrc/controller/d18.lua
+          echo 'function index()' >> package/d18/luasrc/controller/d18.lua
+          echo 'entry({"admin","system","d18"},call("down8"),"@全能顶配",97).dependent=false' >> package/d18/luasrc/controller/d18.lua
+          echo 'end' >> package/d18/luasrc/controller/d18.lua
+
+      - name: 正常编译
         run: |
           cd openwrt
-          make -j$(nproc) V=s
+          make -j$(nproc) V=s 2>&1 | tee build.log || (cat build.log && exit 1)
 
-      - name: 上传N1固件
-        uses: actions/upload-artifact@v4
+      - name: 正常上传固件
+        uses: actions/upload-artifact@v5
         with:
-          name: N1-32G-512M内核全能固件
-          path: openwrt/bin/targets/armsr/armv8/*.img.gz
+          name: N1-512M内核+8G分区全插件固件
+          path: openwrt/bin/targets/armsr/armv8/*
 
-      - name: 发布版本
+      - name: 自动发布
         if: env.UPLOAD_RELEASE == 'true'
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: N1-32G-512M内核固件
-          name: N1 32G根分区+512M内核全能固件
-          body: N1晶晨专用，内核512MB，根分区32G，虚拟机+游戏多开网络隔离全套
-          files: openwrt/bin/targets/armsr/armv8/*.img.gz
-
-      - name: 编译结果邮件通知
-        uses: dawidd6/action-send-mail@v3
-        with:
-          server_address: smtp.qq.com
-          server_port: 465
-          username: ${{ secrets.MAIL_USER }}
-          password: ${{ secrets.MAIL_PASS }}
-          subject: N1软路由固件编译${{ job.status == 'success' && '成功' || '失败' }}
-          body: N1 32G游戏多开防封固件已${{ job.status == 'success' && '编译完成' || '编译出错，请排查日志' }}
-          to: 1986537311@qq.com
-          from: GitHub编译推送
+          tag_name: N1-512M-8G-全插件
+          name: N1 6.6内核 512M+8G分区 最全插件固件
+          body: 原生所有功能不变，分区改为8G空间，整合全网最全插件全家桶
+          files: openwrt/bin/targets/armsr/armv8/*
