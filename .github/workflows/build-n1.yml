@@ -29,8 +29,7 @@ jobs:
       - name: 安装完整编译依赖
         run: |
           sudo apt update -y
-          sudo apt install -y build-essential flex bison gawk libncurses-dev git libssl-dev unzip \
-          libusb-1.0-0-dev libev-dev libnl-3-dev libnl-genl-3-dev golang rustc cargo nodejs npm
+          sudo apt install -y build-essential flex bison gawk libncurses-dev git libssl-dev unzip libusb-1.0-0-dev libev-dev libnl-3-dev libnl-genl-3-dev golang rustc cargo nodejs npm
 
       - name: 拉源码+整合最全插件全家桶
         run: |
@@ -117,11 +116,11 @@ jobs:
           name: N1-512M内核+8G分区全插件固件
           path: openwrt/bin/targets/armsr/armv8/*
 
-      - name: 自动发布
+      - name: 自动发布固件
         if: env.UPLOAD_RELEASE == 'true'
         uses: softprops/action-gh-release@v1
         with:
           tag_name: N1-512M-8G-全插件
-          name: N1 6.6内核 512M+8G分区 最全插件固件
-          body: 原生所有功能不变，分区改为8G空间，整合全网最全插件全家桶
+          name: N1 6.6内核 512M内核分区+8G存储分区 最全插件固件
+          body: 原生所有功能完整保留，已扩容8G空间，集成kenzo+small最全插件全家桶，N1盒子专用
           files: openwrt/bin/targets/armsr/armv8/*
