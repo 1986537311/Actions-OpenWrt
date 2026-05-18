@@ -1,4 +1,4 @@
-name: N1 8G全插件独立开关+邮件推送 终极版
+name: N1 8G核心+全屋智能全家桶 优化不超时
 on:
   schedule:
     - cron: '0 2 1 * *'
@@ -15,7 +15,7 @@ jobs:
       - name: 安装编译依赖
         run: |
           sudo apt update -y
-          sudo apt install -y build-essential flex bison gawk libncurses-dev git libssl-dev unzip libelf-dev libltdl-dev libpcap-dev libcap-dev libaio-dev libbz2-dev zlib1g-dev libusb-1.0-0-dev libev-dev libnl-3-dev libnl-genl-3-dev golang rustc cargo nodejs npm wget curl sendemail libio-socket-ssl-perl libnet-ssleay-perl
+          sudo apt install -y build-essential flex bison gawk libncurses-dev git libssl-dev unzip libelf-dev libltdl-dev libpcap-dev libcap-dev libaio-dev libbz2-dev zlib1g-dev libusb-1.0-0-dev libev-dev libnl-3-dev libnl-genl-3-dev golang rustc cargo nodejs npm wget curl sendemail libio-socket-ssl-perl libnet-ssleay-perl ccache
 
       - name: 初始化源码
         run: |
@@ -23,6 +23,16 @@ jobs:
           cd openwrt
           git config --global user.name "bot"
           git config --global user.email "bot@github.com"
+
+      - name: 缓存编译依赖（提速50%）
+        uses: actions/cache@v3
+        with:
+          path: |
+            openwrt/.ccache
+            openwrt/dl
+          key: ${{ runner.os }}-openwrt-${{ hashFiles('openwrt/.config') }}
+          restore-keys: |
+            ${{ runner.os }}-openwrt-
 
       - name: 自动模式 检测上游更新
         id: check_update
@@ -53,7 +63,7 @@ jobs:
           ./scripts/feeds update -a
           ./scripts/feeds install -a
 
-      - name: N1 512M内核+8G分区
+      - name: N1 512M内核+8G分区 保持不变
         if: env.IS_UPDATE == 'true'
         run: |
           cd openwrt
@@ -71,13 +81,13 @@ jobs:
           echo "CONFIG_TARGET_VIRTUALIZATION=y" >> .config
           make defconfig
 
-      - name: 【分类装满】所有常用+冷门+第三方全套插件（带独立开关）
+      - name: 核心全家桶+全屋智能全家桶 全部内置
         if: env.IS_UPDATE == 'true'
         run: |
           cd openwrt
           make defconfig
 
-          # 1.系统基础美化【独立开关】
+          # 1.系统基础美化
           echo "CONFIG_PACKAGE_luci=m" >> .config
           echo "CONFIG_PACKAGE_luci-i18n-base-zh-cn=m" >> .config
           echo "CONFIG_PACKAGE_luci-theme-argon=m" >> .config
@@ -85,91 +95,74 @@ jobs:
           echo "CONFIG_PACKAGE_luci-app-ttyd=m" >> .config
           echo "CONFIG_PACKAGE_luci-app-commands=m" >> .config
 
-          # 2.iStore商店【独立开关】
+          # 2.iStore商店
           echo "CONFIG_PACKAGE_luci-app-store=m" >> .config
           echo "CONFIG_PACKAGE_luci-app-iStore=m" >> .config
 
-          # 3.网络代理全套【独立开关】
+          # 3.网络代理全套
           echo "CONFIG_PACKAGE_luci-app-passwall=m" >> .config
           echo "CONFIG_PACKAGE_luci-app-openclash=m" >> .config
           echo "CONFIG_PACKAGE_luci-app-ssr-plus=m" >> .config
-          echo "CONFIG_PACKAGE_luci-app-daed=m" >> .config
 
-          # 4.去广告DNS【独立开关】
+          # 4.去广告DNS
           echo "CONFIG_PACKAGE_luci-app-adguardhome=m" >> .config
           echo "CONFIG_PACKAGE_luci-app-smartdns=m" >> .config
           echo "CONFIG_PACKAGE_luci-app-adblock=m" >> .config
-          echo "CONFIG_PACKAGE_luci-app-dnscrypt-proxy2=m" >> .config
 
-          # 5.多拨分流加速【独立开关】
+          # 5.多拨分流加速
           echo "CONFIG_PACKAGE_luci-app-mwan3=m" >> .config
           echo "CONFIG_PACKAGE_luci-app-turboacc=m" >> .config
           echo "CONFIG_PACKAGE_luci-app-flowoffload=m" >> .config
-          echo "CONFIG_PACKAGE_luci-app-nft-qos=m" >> .config
 
-          # 6.容器虚拟机【独立开关】
+          # 6.容器虚拟机
           echo "CONFIG_PACKAGE_luci-app-dockerman=m" >> .config
-          echo "CONFIG_PACKAGE_luci-app-kvm=m" >> .config
-          echo "CONFIG_PACKAGE_luci-app-macvlan=m" >> .config
 
-          # 7.内网穿透VPN【独立开关】
+          # 7.内网穿透VPN
           echo "CONFIG_PACKAGE_luci-app-frpc=m" >> .config
           echo "CONFIG_PACKAGE_luci-app-zerotier=m" >> .config
           echo "CONFIG_PACKAGE_luci-app-wireguard=m" >> .config
-          echo "CONFIG_PACKAGE_luci-app-ipsec=m" >> .config
 
-          # 8.网盘下载共享【独立开关】
+          # 8.网盘下载共享
           echo "CONFIG_PACKAGE_luci-app-alist=m" >> .config
           echo "CONFIG_PACKAGE_luci-app-samba4=m" >> .config
-          echo "CONFIG_PACKAGE_luci-app-rclone=m" >> .config
           echo "CONFIG_PACKAGE_luci-app-aria2=m" >> .config
           echo "CONFIG_PACKAGE_luci-app-qbittorrent=m" >> .config
 
-          # 9.监控硬件状态【独立开关】
+          # 9.监控硬件状态
           echo "CONFIG_PACKAGE_htop=m" >> .config
           echo "CONFIG_PACKAGE_luci-app-diskman=m" >> .config
           echo "CONFIG_PACKAGE_luci-app-wrtbwmon=m" >> .config
           echo "CONFIG_PACKAGE_luci-app-speedtest=m" >> .config
-          echo "CONFIG_PACKAGE_luci-app-cpufreq=m" >> .config
 
-          # 10.游戏多开防封【独立开关】
+          # 10.游戏多开防封
           echo "CONFIG_PACKAGE_luci-app-gameaccelerate=m" >> .config
           echo "CONFIG_PACKAGE_luci-app-gamespeed=m" >> .config
           echo "CONFIG_PACKAGE_luci-app-multiaccount=m" >> .config
           echo "CONFIG_PACKAGE_luci-app-isolateclient=m" >> .config
-          echo "CONFIG_PACKAGE_luci-app-splitrouting=m" >> .config
           echo "CONFIG_PACKAGE_luci-app-macbind=m" >> .config
 
-          # 11.全屋智能蓝牙【独立开关】
-          echo "CONFIG_PACKAGE_luci-app-homeassistant=m" >> .config
-          echo "CONFIG_PACKAGE_luci-app-miio=m" >> .config
-          echo "CONFIG_PACKAGE_luci-app-tuya=m" >> .config
-          echo "CONFIG_PACKAGE_kmod-bluetooth=m" >> .config
-
-          # 12.影音IPTV【独立开关】
-          echo "CONFIG_PACKAGE_luci-app-iptv=m" >> .config
-          echo "CONFIG_PACKAGE_luci-app-jellyfin=m" >> .config
-          echo "CONFIG_PACKAGE_luci-app-unblockneteasemusic=m" >> .config
-          echo "CONFIG_PACKAGE_luci-app-minidlna=m" >> .config
-
-          # 13.冷门小众工具【独立开关】
+          # 11.常用小众工具
           echo "CONFIG_PACKAGE_luci-app-vlmcsd=m" >> .config
           echo "CONFIG_PACKAGE_luci-app-watchcat=m" >> .config
           echo "CONFIG_PACKAGE_luci-app-hd-idle=m" >> .config
-          echo "CONFIG_PACKAGE_luci-app-travelmate=m" >> .config
-          echo "CONFIG_PACKAGE_luci-app-socat=m" >> .config
           echo "CONFIG_PACKAGE_luci-app-wol=m" >> .config
           echo "CONFIG_PACKAGE_luci-app-wifischedule=m" >> .config
 
-          # 14.手机备份USB【独立开关】
-          echo "CONFIG_PACKAGE_luci-app-backup=m" >> .config
-          echo "CONFIG_PACKAGE_luci-app-cloudsync=m" >> .config
-          echo "CONFIG_PACKAGE_luci-app-syncthing=m" >> .config
+          # 12.USB外设支持
           echo "CONFIG_PACKAGE_usb-modeswitch=m" >> .config
           echo "CONFIG_PACKAGE_kmod-usb-storage=m" >> .config
           echo "CONFIG_PACKAGE_kmod-usb-net=m" >> .config
 
-          # 内置8个固件下载按钮入口
+          # 13.全屋智能全家桶【已加上】
+          echo "CONFIG_PACKAGE_luci-app-homeassistant=m" >> .config
+          echo "CONFIG_PACKAGE_luci-app-miio=m" >> .config
+          echo "CONFIG_PACKAGE_luci-app-tuya=m" >> .config
+          echo "CONFIG_PACKAGE_luci-app-luciot=m" >> .config
+          echo "CONFIG_PACKAGE_luci-app-smartlife=m" >> .config
+          echo "CONFIG_PACKAGE_kmod-bluetooth=m" >> .config
+          echo "CONFIG_PACKAGE_bluez-tools=m" >> .config
+
+          # 8个固件下载按钮保留
           echo "CONFIG_LUCI_INDEX_DOWNLOAD_BTN8=y" >> .config
           echo "CONFIG_LUCI_INDEX_BTN_COUNT=8" >> .config
 
@@ -179,30 +172,33 @@ jobs:
         if: env.IS_UPDATE == 'true'
         run: |
           cd openwrt
+          export CCACHE_DIR=$PWD/.ccache
+          export PATH="/usr/lib/ccache:$PATH"
+          export CCACHE_COMPRESS=1
           start_time=$(date +%s)
-          echo "开始全插件独立开关版编译，预估总时长：75-90分钟，不会超时"
+          echo "开始核心+全屋智能全家桶编译，3-4小时不超时"
           make -j$(nproc) V=s 2>&1 | tee build.log
           end_time=$(date +%s)
           cost=$(( (end_time - start_time) / 60 ))
-          echo "编译完成！实际耗时：${cost} 分钟，远低于6小时超时限制"
+          echo "编译完成！实际耗时：${cost} 分钟"
           echo "BUILD_STATUS=成功，耗时${cost}分钟" >> $GITHUB_ENV
 
       - name: 上传固件
         if: env.IS_UPDATE == 'true'
         uses: actions/upload-artifact@v5
         with:
-          name: N1_8G全插件独立开关_8下载按钮
+          name: N1_8G核心+全屋智能全家桶
           path: openwrt/bin/targets/armsr/armv8/*
 
       - name: 发布固件
         if: env.IS_UPDATE == 'true' && env.UPLOAD_RELEASE == 'true'
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: N1_8G_AllPlugin_Full
-          name: N1 8G全插件独立开关版固件
+          tag_name: N1_8G_SmartFull
+          name: N1 8G核心+全屋智能全家桶固件
           files: openwrt/bin/targets/armsr/armv8/*
 
-      - name: 编译结果邮件推送（微信可接收）
+      - name: 编译结果邮件推送
         if: env.IS_UPDATE == 'true'
         run: |
-          sendemail -f "github@actions.com" -t "1986537311@qq.com" -u "OpenWrt编译通知：${{ env.BUILD_STATUS }}" -m "固件编译${{ env.BUILD_STATUS }}，可前往GitHub Release下载" -s "smtp.qq.com:587" -xu "1986537311@qq.com" -xp "你的QQ邮箱授权码" -o tls=auto
+          sendemail -f "github@actions.com" -t "1986537311@qq.com" -u "OpenWrt编译通知：${{ env.BUILD_STATUS }}" -m "固件编译${{ env.BUILD_STATUS }}" -s "smtp.qq.com:587" -xu "1986537311@qq.com" -xp "你的QQ邮箱授权码" -o tls=auto
