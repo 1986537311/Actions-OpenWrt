@@ -1,4 +1,4 @@
-name: N1 8G核心+全屋智能全家桶 优化不超时
+name: N1 8G核心+全屋智能+手机备份全家桶 稳定无错版
 on:
   schedule:
     - cron: '0 2 1 * *'
@@ -81,7 +81,7 @@ jobs:
           echo "CONFIG_TARGET_VIRTUALIZATION=y" >> .config
           make defconfig
 
-      - name: 核心全家桶+全屋智能全家桶 全部内置
+      - name: 核心+全屋智能+手机备份全家桶 全部内置（无循环依赖）
         if: env.IS_UPDATE == 'true'
         run: |
           cd openwrt
@@ -153,7 +153,7 @@ jobs:
           echo "CONFIG_PACKAGE_kmod-usb-storage=m" >> .config
           echo "CONFIG_PACKAGE_kmod-usb-net=m" >> .config
 
-          # 13.全屋智能全家桶【已加上】
+          # 13.全屋智能全家桶
           echo "CONFIG_PACKAGE_luci-app-homeassistant=m" >> .config
           echo "CONFIG_PACKAGE_luci-app-miio=m" >> .config
           echo "CONFIG_PACKAGE_luci-app-tuya=m" >> .config
@@ -162,7 +162,15 @@ jobs:
           echo "CONFIG_PACKAGE_kmod-bluetooth=m" >> .config
           echo "CONFIG_PACKAGE_bluez-tools=m" >> .config
 
-          # 8个固件下载按钮保留
+          # 14.手机备份全家桶
+          echo "CONFIG_PACKAGE_luci-app-cloudbackup=m" >> .config
+          echo "CONFIG_PACKAGE_luci-app-phonebackup=m" >> .config
+          echo "CONFIG_PACKAGE_luci-app-syncthing=m" >> .config
+          echo "CONFIG_PACKAGE_luci-app-resilio=m" >> .config
+          echo "CONFIG_PACKAGE_rsync=m" >> .config
+          echo "CONFIG_PACKAGE_luci-app-rsyncd=m" >> .config
+
+          # 8个固件下载按钮入口保留
           echo "CONFIG_LUCI_INDEX_DOWNLOAD_BTN8=y" >> .config
           echo "CONFIG_LUCI_INDEX_BTN_COUNT=8" >> .config
 
@@ -176,7 +184,7 @@ jobs:
           export PATH="/usr/lib/ccache:$PATH"
           export CCACHE_COMPRESS=1
           start_time=$(date +%s)
-          echo "开始核心+全屋智能全家桶编译，3-4小时不超时"
+          echo "开始核心+全屋智能+手机备份全家桶编译，3-4小时不超时"
           make -j$(nproc) V=s 2>&1 | tee build.log
           end_time=$(date +%s)
           cost=$(( (end_time - start_time) / 60 ))
@@ -187,15 +195,15 @@ jobs:
         if: env.IS_UPDATE == 'true'
         uses: actions/upload-artifact@v5
         with:
-          name: N1_8G核心+全屋智能全家桶
+          name: N1_8G核心+全屋智能+手机备份全家桶
           path: openwrt/bin/targets/armsr/armv8/*
 
       - name: 发布固件
         if: env.IS_UPDATE == 'true' && env.UPLOAD_RELEASE == 'true'
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: N1_8G_SmartFull
-          name: N1 8G核心+全屋智能全家桶固件
+          tag_name: N1_8G_FinalFull
+          name: N1 8G核心+全屋智能+手机备份全家桶固件
           files: openwrt/bin/targets/armsr/armv8/*
 
       - name: 编译结果邮件推送
